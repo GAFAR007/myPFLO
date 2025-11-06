@@ -1,45 +1,61 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+# -----------------------------
+# Flutter / Dart .gitignore
+# Merged + commented
+# -----------------------------
 
-# IntelliJ related
+# ========== Miscellaneous ==========
+*.class                       # JVM/Android compiles
+*.log                         # Logs
+*.pyc                         # Python cache (sometimes present on macOS devs)
+*.swp                         # Vim swap files
+.DS_Store                     # macOS Finder metadata
+.atom/                        # Atom editor folder (legacy)
+.build/                       # Legacy build dir
+.buildlog/                    # Build logs
+.history                      # Editor history files
+.svn/                         # Subversion folders
+.swiftpm/                     # Swift Package Manager workspace
+migrate_working_dir/          # Flutter migration temp dir
+
+# ========== IDE files ==========
+# IntelliJ / Android Studio
 *.iml
 *.ipr
 *.iws
-.idea/
+.idea/                        # Project-specific IDE metadata
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# VS Code (keep out of git to avoid machine-specific settings)
+.vscode/
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
+# ========== Flutter / Dart / Pub ==========
+**/doc/api/                   # Generated API docs
+**/ios/Flutter/.last_build_id # iOS build marker
+.dart_tool/                   # Pub/Flutter tool cache
+.flutter-plugins-dependencies # Generated plugin dependency file
+.pub-cache/                   # Local pub cache
+.pub/                         # Local pub output
+/build/                       # Flutter build artifacts
+/coverage/                    # Test coverage output
 
-# Symbolication related
-app.*.symbols
+# ========== Symbolication / Obfuscation ==========
+app.*.symbols                 # iOS symbolication bundles
+app.*.map.json                # Dart obfuscation map
 
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
+# ========== Android build artifacts ==========
+/android/app/debug            # Variant builds
 /android/app/profile
 /android/app/release
+android/.gradle/              # Gradle cache
+android/local.properties      # Local Android SDK path (machine-specific)
+
+# ========== iOS / CocoaPods ==========
+ios/Pods/                                   # Pods installed locally
+ios/.symlinks/                              # Plugin symlinks
+ios/Flutter/flutter_export_environment.sh   # Generated env script (paths/secrets)
+
+# ========== Secrets / Environment ==========
+*.env                         # Env files (keep service_role OUT of git)
+.env*                         # Any env variants (.env.local, etc.)
+
+# (Optional) System files you might see
+Thumbs.db                     # Windows thumbnail cache
