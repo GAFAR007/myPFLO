@@ -12,10 +12,8 @@ class ProfileRepository {
   // Insert or update the single profile row, then return it.
   Future<SiteProfile> upsertProfile(SiteProfile p) async {
     // Force the expected type so the analyzer is happy.
-    final List<Map<String, dynamic>> rows = await _db
-        .from(_table)
-        .upsert(p.toMap())
-        .select();
+    final List<Map<String, dynamic>> rows =
+        await _db.from(_table).upsert(p.toMap()).select();
 
     if (rows.isEmpty) {
       throw Exception('Upsert failed: no row returned.');
@@ -25,10 +23,8 @@ class ProfileRepository {
 
   // Read the first (only) profile row; returns null if none.
   Future<SiteProfile?> fetchProfile() async {
-    final List<Map<String, dynamic>> rows = await _db
-        .from(_table)
-        .select()
-        .limit(1);
+    final List<Map<String, dynamic>> rows =
+        await _db.from(_table).select().limit(1);
 
     if (rows.isEmpty) return null;
     return SiteProfile.fromMap(rows.first);
