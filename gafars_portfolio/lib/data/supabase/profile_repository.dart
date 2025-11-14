@@ -1,32 +1,31 @@
 // lib/data/supabase/profile_repository.dart
-// Thin data layer that talks to Supabase for the `site_profile` table.
+//
+// Handles reading/writing the `site_profile` table.
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'supabase_client.dart';
 import 'models/site_profile.dart';
 
 class ProfileRepository {
-  static const _table = 'site_profile';
-  final SupabaseClient _db = Supa.client;
-
-  // Insert or update the single profile row, then return it.
-  Future<SiteProfile> upsertProfile(SiteProfile p) async {
-    // Force the expected type so the analyzer is happy.
-    final List<Map<String, dynamic>> rows =
-        await _db.from(_table).upsert(p.toMap()).select();
-
-    if (rows.isEmpty) {
-      throw Exception('Upsert failed: no row returned.');
-    }
-    return SiteProfile.fromMap(rows.first);
+  ProfileRepository() {
+    // Make sure env vars exist – fails early in dev instead of random errors.
+    Supa.assertConfigured();
   }
 
-  // Read the first (only) profile row; returns null if none.
-  Future<SiteProfile?> fetchProfile() async {
-    final List<Map<String, dynamic>> rows =
-        await _db.from(_table).select().limit(1);
+  // ✅ Use our shared Supa.client (no Supabase.instance here).
+  SupabaseClient get _client => Supa.client;
 
-    if (rows.isEmpty) return null;
-    return SiteProfile.fromMap(rows.first);
+  /// Fetch the profile row (or null if none exists yet).
+  Future<SiteProfile?> fetchProfile() async {
+    final res = await _client.from('site_profile').select().maybeSingle();
+
+    if (res == null) return null;
+    return SiteProfile.fromMap(res);
+  }
+
+  /// Insert or update the profile.
+  Future<void> upsertProfile(SiteProfile profile) async {
+    await _client.from('site_profile').upsert(profile.toMap());
   }
 }

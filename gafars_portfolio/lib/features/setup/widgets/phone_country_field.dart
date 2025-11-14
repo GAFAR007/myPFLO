@@ -1,81 +1,97 @@
 // lib/features/setup/widgets/phone_country_field.dart
+//
+// Combines a country picker + national number input and writes a full
+// E.164 phone string into the provided controller, e.g. "+447881169965".
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-// Minimal in-file metadata for 3 countries; extend as needed.
-class _DialMeta {
-  final String flag;
-  final String name;
-  final String dial; // "+234"
-  final int minLen;
-  final int maxLen;
-  const _DialMeta(this.flag, this.name, this.dial, this.minLen, this.maxLen);
-}
-
-const _kCountries = <_DialMeta>[
-  _DialMeta('🇳🇬', 'Nigeria', '+234', 8, 11),
-  _DialMeta('🇬🇧', 'United Kingdom', '+44', 9, 10),
-  _DialMeta('🇺🇸', 'United States', '+1', 10, 10),
-];
+import '../validators/validators.dart';
 
 class PhoneCountryField extends StatefulWidget {
-  final TextEditingController controller; // receives final E.164
-  final bool required;
+  const PhoneCountryField({super.key, required this.controller});
 
-  const PhoneCountryField({
-    super.key,
-    required this.controller,
-    this.required = false,
-  });
+  /// Controller that will hold the full E.164 phone string, e.g. "+447881169965".
+  final TextEditingController controller;
 
   @override
   State<PhoneCountryField> createState() => _PhoneCountryFieldState();
 }
 
+/// Simple model for a supported country / dial code.
+class _Country {
+  const _Country({
+    required this.flag,
+    required this.name,
+    required this.dialCode,
+  });
+
+  final String flag; // e.g. "🇬🇧"
+  final String name; // e.g. "United Kingdom"
+  final String dialCode; // e.g. "44"
+}
+
+// Limited list for now – you can always extend this later.
+const List<_Country> _countries = [
+  _Country(flag: '🇬🇧', name: 'United Kingdom', dialCode: '44'),
+  _Country(flag: '🇳🇬', name: 'Nigeria', dialCode: '234'),
+];
+
 class _PhoneCountryFieldState extends State<PhoneCountryField> {
-  _DialMeta _selected = _kCountries.first;
-  final _national = TextEditingController();
+  late _Country _selectedCountry;
+  late TextEditingController _nationalController;
 
   @override
   void initState() {
     super.initState();
-    // If controller already has +code, try to split it
-    final e164 = widget.controller.text.trim();
-    if (e164.startsWith('+')) {
-      for (final c in _kCountries) {
-        if (e164.startsWith(c.dial)) {
-          _selected = c;
-          _national.text = e164.replaceFirst(c.dial, '');
-          break;
-        }
+    _selectedCountry = _countries.first; // default to first in list (UK)
+    _nationalController = TextEditingController();
+
+    // If there's already an E.164 value in the controller, try to parse it.
+    final existing = widget.controller.text.trim();
+    if (existing.startsWith('+')) {
+      _tryParseExistingE164(existing);
+    } else if (existing.isNotEmpty) {
+      // If someone saved without +, at least keep the digits.
+      _nationalController.text = existing;
+    }
+  }
+
+  /// Try to split an existing E.164 string into country + national number.
+  void _tryParseExistingE164(String e164) {
+    final cleaned = cleanE164(e164);
+    if (!cleaned.startsWith('+')) return;
+
+    // Remove leading +
+    final digits = cleaned.substring(1);
+
+    // Try to find a matching country dial code prefix.
+    for (final c in _countries) {
+      if (digits.startsWith(c.dialCode)) {
+        _selectedCountry = c;
+        _nationalController.text = digits.substring(c.dialCode.length);
+        return;
       }
     }
-    _rebuildE164();
+
+    // Fallback: keep as national number if no country matched.
+    _nationalController.text = digits;
+  }
+
+  /// Build and store the E.164 string into the external controller.
+  void _updateE164() {
+    final national = _nationalController.text.trim();
+    if (national.isEmpty) {
+      widget.controller.text = '';
+      return;
+    }
+    final e164 = '+${_selectedCountry.dialCode}$national';
+    widget.controller.text = e164;
   }
 
   @override
   void dispose() {
-    _national.dispose();
+    _nationalController.dispose();
     super.dispose();
-  }
-
-  void _rebuildE164() {
-    final digits = _national.text.replaceAll(RegExp(r'\D'), '');
-    final e164 = digits.isEmpty ? '' : '${_selected.dial}$digits';
-    widget.controller.text = e164;
-  }
-
-  String? _validateNational(String? v) {
-    final digits = (v ?? '').replaceAll(RegExp(r'\D'), '');
-    if (widget.required && digits.isEmpty) {
-      return 'Required';
-    }
-    if (digits.isNotEmpty &&
-        (digits.length < _selected.minLen ||
-            digits.length > _selected.maxLen)) {
-      return 'Enter ${_selected.minLen}–${_selected.maxLen} digits';
-    }
-    return null;
   }
 
   @override
@@ -83,87 +99,58 @@ class _PhoneCountryFieldState extends State<PhoneCountryField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Phone (E.164)'),
-        const SizedBox(height: 6),
-
-        // 👉 Responsive layout: Row on wide, Column on narrow
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final narrow = constraints.maxWidth < 420;
-
-            final countryPicker = DropdownButtonFormField<_DialMeta>(
-              value: _selected,
-              isExpanded: true, // prevent overflow by letting it use full width
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 14,
-                ),
-              ),
-              items: _kCountries
+        Row(
+          children: [
+            // Country / dial code dropdown
+            DropdownButton<_Country>(
+              value: _selectedCountry,
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() {
+                  _selectedCountry = value;
+                });
+                _updateE164();
+              },
+              items: _countries
                   .map(
-                    (c) => DropdownMenuItem(
+                    (c) => DropdownMenuItem<_Country>(
                       value: c,
-                      // Ellipsize long labels instead of overflowing
-                      child: Text(
-                        '${c.flag} ${c.name}  ${c.dial}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      child: Row(
+                        children: [
+                          Text(c.flag),
+                          const SizedBox(width: 8),
+                          Text('${c.name} +${c.dialCode}'),
+                        ],
                       ),
                     ),
                   )
                   .toList(),
-              onChanged: (c) {
-                if (c == null) return;
-                setState(() => _selected = c);
-                _rebuildE164();
-              },
-            );
+            ),
 
-            final nationalNumber = TextFormField(
-              controller: _national,
-              keyboardType: TextInputType.phone,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                hintText: 'national number (digits only)',
-                border: OutlineInputBorder(),
+            const SizedBox(width: 8),
+
+            // National number input
+            Expanded(
+              child: TextFormField(
+                controller: _nationalController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Phone (national)',
+                  hintText: 'national number (digits only)',
+                ),
+                validator: nationalNumberValidator,
+                onChanged: (_) => _updateE164(),
               ),
-              validator: _validateNational,
-              onChanged: (_) => _rebuildE164(),
-            );
-
-            if (narrow) {
-              // Stack vertically on small screens to avoid overflow
-              return Column(
-                children: [
-                  countryPicker,
-                  const SizedBox(height: 8),
-                  nationalNumber,
-                ],
-              );
-            }
-
-            // Side-by-side on wider screens
-            return Row(
-              children: [
-                Expanded(flex: 3, child: countryPicker),
-                const SizedBox(width: 12),
-                Expanded(flex: 7, child: nationalNumber),
-              ],
-            );
-          },
+            ),
+          ],
         ),
-
-        // Subtle helper line showing what will be saved
-        Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text(
-            widget.controller.text.isEmpty
-                ? 'Will save as ${_selected.dial}…'
-                : 'Will save as ${widget.controller.text}',
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
-          ),
+        const SizedBox(height: 4),
+        // Helper text showing how it will be stored.
+        Text(
+          widget.controller.text.isEmpty
+              ? 'Will save as +<country_code><number>...'
+              : 'Will save as ${widget.controller.text}',
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
         ),
       ],
     );
