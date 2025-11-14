@@ -1,11 +1,17 @@
 // lib/features/setup/view/setup_page.dart
+//
+// Admin-only Setup screen to seed / edit your public profile
+// in the `site_profile` table. This page is protected by AuthGate,
+// so only a logged-in admin user can see it.
+
 import 'package:flutter/material.dart';
 
-// data
+// --- Data layer (Supabase repositories + models) ---
 import '../../../data/supabase/profile_repository.dart';
 import '../../../data/supabase/models/site_profile.dart';
+import '../../../data/supabase/supabase_client.dart';
 
-// widgets
+// --- Widgets (small reusable UI building blocks) ---
 import '../widgets/connection_banner.dart';
 import '../widgets/labeled_field.dart';
 import '../widgets/name_fields_row.dart';
@@ -14,7 +20,7 @@ import '../widgets/phone_country_field.dart';
 import '../widgets/avatar_upload_field.dart';
 import '../widgets/cv_upload_field.dart';
 
-// validators
+// --- Validators (simple pure functions) ---
 import '../validators/validators.dart';
 
 class SetupPage extends StatefulWidget {
@@ -25,15 +31,15 @@ class SetupPage extends StatefulWidget {
 }
 
 class _SetupPageState extends State<SetupPage> {
-  /// Global key for the form – lets us call `validate()` and `save()`.
+  /// Global key for the form – lets us call `validate()` etc.
   final _formKey = GlobalKey<FormState>();
 
   /// Repository that talks to Supabase for the `site_profile` table.
   final _repo = ProfileRepository();
 
-  // ----------------------------
+  // --------------------------------------------------
   // Controllers & state fields
-  // ----------------------------
+  // --------------------------------------------------
 
   // Name parts
   final _first = TextEditingController();
@@ -43,7 +49,7 @@ class _SetupPageState extends State<SetupPage> {
   // Date of birth (not a TextEditingController)
   DateTime? _dob;
 
-  // Core fields (we removed _fullName – it’s computed from parts)
+  // Core fields
   final _title = TextEditingController(text: 'Flutter Developer');
   final _email = TextEditingController();
 
@@ -60,9 +66,9 @@ class _SetupPageState extends State<SetupPage> {
   final _avatarUrl = TextEditingController();
 
   // Loading / saving + status message
-  bool _loading = true;
-  bool _saving = false;
-  String? _status;
+  bool _loading = true; // page-level loading (health + prefill)
+  bool _saving = false; // saving state for the submit button
+  String? _status; // text under the form (success / error)
 
   // Connection banner + health check
   bool _checkingConn = true;
@@ -72,7 +78,8 @@ class _SetupPageState extends State<SetupPage> {
   @override
   void initState() {
     super.initState();
-    _init(); // kick off connection check + prefill once widget mounts
+    // When the widget mounts, run a health check and prefill the form.
+    _init();
   }
 
   /// High-level init: check Supabase connection and prefill existing profile.
@@ -82,12 +89,16 @@ class _SetupPageState extends State<SetupPage> {
   }
 
   /// Quick health check – pings Supabase using `fetchProfile`.
+  ///
+  /// This is mainly for developer feedback: if something is wrong with the
+  /// connection or RLS, we show it at the top of the screen.
   Future<void> _checkConnection() async {
     setState(() {
       _checkingConn = true;
       _healthOk = false;
       _healthErr = null;
     });
+
     try {
       await _repo.fetchProfile().timeout(const Duration(seconds: 8));
       _healthOk = true;
@@ -97,11 +108,16 @@ class _SetupPageState extends State<SetupPage> {
       // ignore: avoid_print
       print('[SupaHealth] check failed: $e\n$st');
     } finally {
-      if (mounted) setState(() => _checkingConn = false);
+      if (mounted) {
+        setState(() => _checkingConn = false);
+      }
     }
   }
 
   /// Prefill the form if a profile already exists in Supabase.
+  ///
+  /// This lets you revisit the page later and edit, instead of always
+  /// starting from an empty form.
   Future<void> _prefill() async {
     try {
       final p = await _repo.fetchProfile();
@@ -121,23 +137,25 @@ class _SetupPageState extends State<SetupPage> {
         _aboutMd.text = p.aboutMd ?? '';
         _phoneE164.text = p.phoneE164 ?? '';
         _linkedin.text = p.linkedin ?? '';
-        _cvUrl.text = p.cvUrl ?? ''; // 👈 prefill CV URL
+        _cvUrl.text = p.cvUrl ?? ''; // prefill CV URL
         _github.text = p.github ?? '';
         _twitter.text = p.twitter ?? '';
         _website.text = p.website ?? '';
         _location.text = p.location ?? '';
-        _avatarUrl.text = p.avatarUrl ?? ''; // 👈 prefill Avatar URL
+        _avatarUrl.text = p.avatarUrl ?? ''; // prefill Avatar URL
       }
     } catch (e, st) {
       // ignore: avoid_print
       print('[SetupPrefill] failed: $e\n$st');
       _status = 'Failed to load existing profile. You can still submit.';
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
-  /// Helper: turns empty strings into `null` so we don’t store empty text.
+  /// Helper: turns empty strings into `null` so we don’t store "" in the DB.
   String? _emptyToNull(String v) => v.trim().isEmpty ? null : v.trim();
 
   @override
@@ -165,7 +183,7 @@ class _SetupPageState extends State<SetupPage> {
     super.dispose();
   }
 
-  /// Builds a `SiteProfile` object and upserts it to Supabase.
+  /// Build a `SiteProfile` object from the form and upsert it to Supabase.
   Future<void> _save() async {
     // Validate all form fields first.
     if (!_formKey.currentState!.validate()) return;
@@ -185,7 +203,7 @@ class _SetupPageState extends State<SetupPage> {
 
       // Create the SiteProfile model expected by ProfileRepository.
       final p = SiteProfile(
-        id: 'seed', // ignored on insert – repository should handle real IDs
+        id: 'seed', // repository can choose to ignore / override this
         fullName: fullName,
         title: _title.text.trim(),
         email: _email.text.trim(),
@@ -193,29 +211,30 @@ class _SetupPageState extends State<SetupPage> {
         aboutMd: _emptyToNull(_aboutMd.text),
         phoneE164: _emptyToNull(_phoneE164.text),
         linkedin: _emptyToNull(_linkedin.text),
-        cvUrl: _emptyToNull(_cvUrl.text), // 👈 CV URL from upload field
+        cvUrl: _emptyToNull(_cvUrl.text), // CV URL from upload field
         github: _emptyToNull(_github.text),
         twitter: _emptyToNull(_twitter.text),
         website: _emptyToNull(_website.text),
         location: _emptyToNull(_location.text),
-        avatarUrl: _emptyToNull(
-          _avatarUrl.text,
-        ), // 👈 Avatar URL from upload field
+        avatarUrl: _emptyToNull(_avatarUrl.text), // Avatar URL from upload
         firstName: _emptyToNull(_first.text),
         middleName: _emptyToNull(_middle.text),
         lastName: _emptyToNull(_last.text),
         dateOfBirth: _dob,
       );
 
-      // Persist to Supabase.
+      // Persist to Supabase (insert or update).
       await _repo.upsertProfile(p);
-      setState(() => _status = '✅ Saved! One-time seeding complete.');
+
+      setState(
+        () => _status = '✅ Saved! Profile is now ready for the public site.',
+      );
     } catch (e, st) {
       // ignore: avoid_print
       print('[SetupSave] upsert failed: $e\n$st');
       setState(
         () => _status =
-            '❌ Save failed. If you already dropped TEMP policies, re-enable them, save once, then drop again.',
+            '❌ Save failed. Check Supabase policies / connection and try again.',
       );
     } finally {
       setState(() => _saving = false);
@@ -230,7 +249,26 @@ class _SetupPageState extends State<SetupPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Setup (Dev Only)')),
+      appBar: AppBar(
+        title: const Text('Setup (Dev Only)'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sign out',
+            onPressed: () async {
+              // 1) Sign out from Supabase (clears the session)
+              await Supa.client.auth.signOut();
+
+              // 2) Navigate back to the public home page ('/')
+              if (!mounted) return;
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/', // route name for HomePage
+                (route) => false, // clear previous navigation stack
+              );
+            },
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           Center(
@@ -243,9 +281,9 @@ class _SetupPageState extends State<SetupPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // ----------------------------
+                      // ----------------------------------------------
                       // Connection / health banner
-                      // ----------------------------
+                      // ----------------------------------------------
                       ConnectionBanner(
                         checking: _checkingConn,
                         ok: _healthOk,
@@ -263,9 +301,9 @@ class _SetupPageState extends State<SetupPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ----------------------------
+                      // ----------------------------------------------
                       // Names + DOB
-                      // ----------------------------
+                      // ----------------------------------------------
                       NameFieldsRow(
                         first: _first,
                         middle: _middle,
@@ -274,9 +312,9 @@ class _SetupPageState extends State<SetupPage> {
                       const SizedBox(height: 8),
                       DobField(initial: _dob, onChanged: (d) => _dob = d),
 
-                      // ----------------------------
+                      // ----------------------------------------------
                       // Required core fields
-                      // ----------------------------
+                      // ----------------------------------------------
                       LabeledField(
                         label: 'Title *',
                         controller: _title,
@@ -289,9 +327,9 @@ class _SetupPageState extends State<SetupPage> {
                         validator: (v) => emailValidator(v, required: true),
                       ),
 
-                      // ----------------------------
+                      // ----------------------------------------------
                       // Optional fields
-                      // ----------------------------
+                      // ----------------------------------------------
                       LabeledField(label: 'Tagline', controller: _tagline),
                       LabeledField(
                         label: 'About (Markdown)',
@@ -325,9 +363,9 @@ class _SetupPageState extends State<SetupPage> {
                         validator: urlValidator,
                       ),
 
-                      // ----------------------------
+                      // ----------------------------------------------
                       // Profile media (Avatar + CV)
-                      // ----------------------------
+                      // ----------------------------------------------
                       const SizedBox(height: 12),
                       const Text(
                         'Profile Media',
@@ -338,13 +376,11 @@ class _SetupPageState extends State<SetupPage> {
                       ),
                       const SizedBox(height: 8),
 
-                      /// Custom widget that handles picking/uploading an avatar
-                      /// and writing the final public URL into `_avatarUrl`.
+                      // Avatar uploader (writes URL into _avatarUrl)
                       AvatarUploadField(controller: _avatarUrl),
                       const SizedBox(height: 12),
 
-                      /// Custom widget that handles picking/uploading a CV
-                      /// and writing the final public URL into `_cvUrl`.
+                      // CV uploader (writes URL into _cvUrl)
                       CvUploadField(controller: _cvUrl),
 
                       // Location
@@ -352,7 +388,7 @@ class _SetupPageState extends State<SetupPage> {
                       LabeledField(
                         label: 'Location',
                         controller: _location,
-                        hint: 'e.g., Lagos, Nigeria',
+                        hint: 'e.g., Wolverhampton, United Kingdom',
                       ),
 
                       const SizedBox(height: 12),
@@ -391,11 +427,11 @@ class _SetupPageState extends State<SetupPage> {
                       const Divider(),
                       const SizedBox(height: 8),
 
-                      // Dev-only reminder about TEMP Supabase policies.
+                      // Small dev note; safe to delete later if you want.
                       const Text(
-                        'Dev tip: After you save once, remove TEMP write policies in Supabase (SQL):\n'
-                        'drop policy if exists "allow_upsert_profile_from_anon_temp" on public.site_profile;\n'
-                        'drop policy if exists "allow_update_profile_from_anon_temp" on public.site_profile;',
+                        'Dev note: This page is for admin use only. '
+                        'Public visitors will read from site_profile via the '
+                        'Home / About / Projects pages.',
                         style: TextStyle(fontSize: 12, color: Colors.black54),
                       ),
                     ],
