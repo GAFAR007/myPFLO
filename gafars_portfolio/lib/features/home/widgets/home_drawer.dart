@@ -151,8 +151,9 @@ class HomeDrawer extends StatelessWidget {
                 context,
                 icon: Icons.article_outlined,
                 label: 'CV / Resume',
-                // Later: routeName: '/cv',
+                routeName: '/resume', // 👈 now navigates to ResumePage
               ),
+
               const Divider(color: Colors.white10, height: 24),
               _drawerItem(
                 context,

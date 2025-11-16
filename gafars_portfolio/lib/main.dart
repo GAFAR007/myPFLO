@@ -13,6 +13,7 @@ import 'features/home/view/home_page.dart';
 import 'features/projects/view/projects_page.dart';
 import 'features/about/view/about_page.dart';
 import 'features/contact/view/contact_page.dart';
+import 'features/resume/view/resume_page.dart';
 
 void main() {
   // Fail early if env vars are missing
@@ -42,7 +43,8 @@ class MyApp extends StatelessWidget {
         '/projects': (context) => const ProjectsPage(),
         '/about': (context) => const AboutPage(),
         '/contact': (context) => const ContactPage(),
-
+        '/resume': (context) => const ResumePage(),
+        
         // Admin-only setup area behind AuthGate
         '/admin': (context) => const AuthGate(child: SetupPage()),
       },
