@@ -5,12 +5,11 @@
 // - Shows your real avatar + name in the header.
 // - Below that: a list of nav items that navigate with named routes.
 
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:web/web.dart' as web;
 import 'package:flutter/material.dart';
 
 import '../../../data/supabase/profile_repository.dart';
 import '../../../data/supabase/models/site_profile.dart';
+import '../../home/widgets/app_avatar.dart';
 
 class HomeDrawer extends StatelessWidget {
   const HomeDrawer({super.key});
@@ -79,7 +78,8 @@ class HomeDrawer extends StatelessWidget {
 
                     return Row(
                       children: [
-                        _DrawerAvatar(avatarUrl: avatarUrl),
+                        AppAvatar(avatarUrl: avatarUrl, size: 56),
+
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -217,63 +217,6 @@ class HomeDrawer extends StatelessWidget {
         if (routeName != null) {
           Navigator.of(context).pushNamed(routeName);
         }
-      },
-    );
-  }
-}
-
-/// Small avatar widget reused by the drawer header.
-/// Uses the same idea as DisplayAvatar:
-/// - If URL empty → fallback icon.
-/// - On web → real <img> via HtmlElementView.
-/// - On other platforms → NetworkImage in CircleAvatar.
-class _DrawerAvatar extends StatelessWidget {
-  const _DrawerAvatar({required this.avatarUrl});
-
-  final String avatarUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final clean = avatarUrl.trim();
-
-    if (clean.isEmpty) {
-      debugPrint('[HomeDrawer] avatarUrl empty – using fallback icon');
-      return const CircleAvatar(
-        radius: 28,
-        backgroundColor: Colors.white10,
-        child: Icon(Icons.person, color: Colors.white70),
-      );
-    }
-
-    // Web: use <img> to avoid ImageDecoder issues
-    if (kIsWeb) {
-      debugPrint('[HomeDrawer] Using HtmlElementView <img> for drawer avatar.');
-      return ClipOval(
-        child: SizedBox(
-          width: 56,
-          height: 56,
-          child: HtmlElementView.fromTagName(
-            tagName: 'img',
-            onElementCreated: (element) {
-              final img = element as web.HTMLImageElement;
-              img.src = clean;
-              img.alt = 'Profile avatar';
-              img.style.objectFit = 'cover';
-              img.style.width = '56px';
-              img.style.height = '56px';
-            },
-          ),
-        ),
-      );
-    }
-
-    // Mobile / desktop: normal NetworkImage
-    return CircleAvatar(
-      radius: 28,
-      backgroundColor: Colors.white10,
-      backgroundImage: NetworkImage(clean),
-      onBackgroundImageError: (_, __) {
-        debugPrint('[HomeDrawer] ❌ NetworkImage error for $clean');
       },
     );
   }
