@@ -3,7 +3,7 @@
 // Simple Lyft-style side drawer.
 // - Fetches SiteProfile from Supabase (only firstName, lastName, avatarUrl).
 // - Shows your real avatar + name in the header.
-// - Below that: a list of nav items (currently just log taps).
+// - Below that: a list of nav items that navigate with named routes.
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:web/web.dart' as web;
@@ -122,49 +122,50 @@ class HomeDrawer extends StatelessWidget {
 
               const Divider(color: Colors.white10, height: 1),
 
-              // Menu items (static for now)
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  children: [
-                    _drawerItem(
-                      context,
-                      icon: Icons.dashboard_outlined,
-                      label: 'Overview',
-                    ),
-                    _drawerItem(
-                      context,
-                      icon: Icons.work_outline,
-                      label: 'Projects',
-                    ),
-                    _drawerItem(
-                      context,
-                      icon: Icons.person_outline,
-                      label: 'About me',
-                    ),
-                    _drawerItem(
-                      context,
-                      icon: Icons.mail_outline,
-                      label: 'Contact',
-                    ),
-                    _drawerItem(
-                      context,
-                      icon: Icons.article_outlined,
-                      label: 'CV / Resume',
-                    ),
-                    const Divider(color: Colors.white10, height: 24),
-                    _drawerItem(
-                      context,
-                      icon: Icons.settings_outlined,
-                      label: 'Settings',
-                    ),
-                    _drawerItem(
-                      context,
-                      icon: Icons.help_outline,
-                      label: 'Help',
-                    ),
-                  ],
-                ),
+              // 🔹 Navigation items
+              _drawerItem(
+                context,
+                icon: Icons.dashboard_outlined,
+                label: 'Overview',
+                routeName: '/',
+              ),
+              _drawerItem(
+                context,
+                icon: Icons.work_outline,
+                label: 'Projects',
+                routeName: '/projects',
+              ),
+              _drawerItem(
+                context,
+                icon: Icons.person_outline,
+                label: 'About me',
+                routeName: '/about',
+              ),
+              _drawerItem(
+                context,
+                icon: Icons.mail_outline,
+                label: 'Contact',
+                routeName: '/contact',
+              ),
+              _drawerItem(
+                context,
+                icon: Icons.article_outlined,
+                label: 'CV / Resume',
+                // Later: routeName: '/cv',
+              ),
+              const Divider(color: Colors.white10, height: 24),
+              _drawerItem(
+                context,
+                icon: Icons.settings_outlined,
+                label: 'Settings',
+                routeName:
+                    '/admin', // 👈 Admin area (AuthGate → Login → SetupPage)
+              ),
+              _drawerItem(
+                context,
+                icon: Icons.help_outline,
+                label: 'Help',
+                // Later: routeName: '/help',
               ),
             ],
           ),
@@ -194,12 +195,15 @@ class HomeDrawer extends StatelessWidget {
     );
   }
 
+  // ✅ Single merged version: supports navigation via routeName
   Widget _drawerItem(
     BuildContext context, {
     required IconData icon,
     required String label,
+    String? routeName,
   }) {
     final textTheme = Theme.of(context).textTheme;
+
     return ListTile(
       leading: Icon(icon, color: Colors.white70, size: 22),
       title: Text(
@@ -208,8 +212,11 @@ class HomeDrawer extends StatelessWidget {
       ),
       onTap: () {
         debugPrint('[Drawer] $label tapped');
-        Navigator.of(context).pop(); // close drawer
-        // TODO: push to the right page later
+        Navigator.of(context).pop(); // close drawer first
+
+        if (routeName != null) {
+          Navigator.of(context).pushNamed(routeName);
+        }
       },
     );
   }
