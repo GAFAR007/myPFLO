@@ -2,18 +2,20 @@
 //
 // HomePage – responsive hero (desktop + mobile)
 
-// 👈 for logging
 import 'package:flutter/material.dart';
+import 'package:gafars_portfolio/features/home/widgets/contact_form_page.dart';
 
 import '../../../data/supabase/profile_repository.dart';
 import '../../../data/supabase/models/site_profile.dart';
 import '../widgets/displayavarter.dart';
+import '../widgets/menu_button.dart';
+import '../widgets/hire_me_button.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) { 
+  Widget build(BuildContext context) {
     final repo = ProfileRepository();
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -22,8 +24,27 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: colorScheme.surface,
+        // 👇 give the MENU text enough width so it doesn’t look broken
+        leadingWidth: 90,
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 8),
+          child: MenuButton(),
+        ),
         title: const Text('Gafars Technologies'),
         centerTitle: true,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: HireMeButton(
+              // 👇 HIRE ME → navigate to form page
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ContactFormPage()),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       body: FutureBuilder<SiteProfile?>(
         future: repo.fetchProfile(),
@@ -230,7 +251,7 @@ class _HeroTextBlock extends StatelessWidget {
         ),
         const SizedBox(height: 20),
 
-        // "Hi, my name is Razak."
+        // "Hi, my name is ..."
         Text.rich(
           TextSpan(
             children: [
