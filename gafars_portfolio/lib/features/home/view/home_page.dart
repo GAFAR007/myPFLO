@@ -10,6 +10,7 @@ import '../../../data/supabase/models/site_profile.dart';
 import '../widgets/displayavarter.dart';
 import '../widgets/menu_button.dart';
 import '../widgets/hire_me_button.dart';
+import '../widgets/home_drawer.dart'; // 👈 NEW
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -20,7 +21,9 @@ class HomePage extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      
       backgroundColor: colorScheme.surface.withOpacity(0.2),
+      drawer: const HomeDrawer(), // 👈 NEW
       appBar: AppBar(
         elevation: 0,
         backgroundColor: colorScheme.surface,
