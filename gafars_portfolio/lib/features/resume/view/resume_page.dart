@@ -228,7 +228,9 @@ class _ResumePageState extends State<ResumePage> {
             _InfoChip(label: 'MSc Business Management'),
             _InfoChip(label: 'Mobile Software Engineer'),
             _InfoChip(label: 'Flutter • React • Node'),
-            _InfoChip(label: 'UK-based'),
+            _InfoChip(label: '5+ Years Experience'),
+                  
+
           ],
         ),
 
@@ -238,7 +240,7 @@ class _ResumePageState extends State<ResumePage> {
         Text(
           '• Key projects in Flutter, React, and Node.js\n'
           '• Management and leadership experience\n'
-          '• Professional care and community engagement\n'
+      
           '• Education, certifications, and core skills',
           style: textTheme.bodySmall,
         ),

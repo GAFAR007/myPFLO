@@ -21,7 +21,6 @@ class HomePage extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      
       backgroundColor: colorScheme.surface.withOpacity(0.2),
       drawer: const HomeDrawer(), // 👈 NEW
       appBar: AppBar(
@@ -282,7 +281,7 @@ class _HeroTextBlock extends StatelessWidget {
 
         // Location line
         Text(
-          'Based in $location',
+          ' $location',
           textAlign: isNarrow ? TextAlign.center : TextAlign.left,
           style: textTheme.bodyMedium?.copyWith(color: Colors.black54),
         ),
