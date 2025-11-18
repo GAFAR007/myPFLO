@@ -1,9 +1,15 @@
 // lib/features/contact/view/contact_page.dart
 //
-// Public ContactPage – uses AppScaffold and embeds ContactFormPage.
-// - Fetches SiteProfile from Supabase for name/email/phone.
-// - Shows your real contact details in a themed card + response time,
-//   then the contact form in another card.
+// ContactPage
+// -----------
+// - Uses AppScaffold so AppBar / Drawer / theme are centralised.
+// - Fetches SiteProfile from Supabase (name, email, phoneE164).
+// - While data is loading → shows a full-page CircularProgressIndicator.
+// - Once loaded:
+//     • Builds a “Contact details” card using values from SiteProfile.
+//     • If any of name/email/phone can't be derived, shows a small
+//       "Loading contact details..." indicator inside that card instead.
+// - Below the info card, shows the ContactFormPage in a themed card.
 
 import 'package:flutter/material.dart';
 
@@ -27,26 +33,28 @@ class ContactPage extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 700),
             child: FutureBuilder<SiteProfile?>(
+              // 🔹 Load a single profile row from Supabase
               future: repo.fetchProfile(),
               builder: (context, snapshot) {
                 final theme = Theme.of(context);
                 final textTheme = theme.textTheme;
                 final colorScheme = theme.colorScheme;
 
-                // 🔍 General state log
+                // 🔍 Debug log for connection state + high-level status
                 debugPrint(
                   '[ContactPage] state=${snapshot.connectionState} '
                   'hasError=${snapshot.hasError} hasData=${snapshot.hasData}',
                 );
 
-                // ⏳ While the future is still running, show page-level loader
+                // ⏳ While the Future is still running, show a full-page loader
                 if (snapshot.connectionState != ConnectionState.done) {
                   return const Center(
                     child: CircularProgressIndicator(strokeWidth: 2),
                   );
                 }
 
-                // ❌ Error – log it but still render page
+                // ❌ If the Future completed with an error, log it.
+                //     We still try to render the page below using null profile.
                 if (snapshot.hasError) {
                   debugPrint('ContactPage error: ${snapshot.error}');
                 }
@@ -54,11 +62,13 @@ class ContactPage extends StatelessWidget {
                 final profile = snapshot.data;
 
                 if (profile == null) {
+                  // No row found – card will use the "loading contact details"
+                  // variant instead of hard-coded name/email/phone.
                   debugPrint(
                     '[ContactPage] profile is NULL – contact details will show loading indicator',
                   );
                 } else {
-                  // 🧾 Log what we got from Supabase
+                  // 🧾 Log core fields we care about for debugging.
                   debugPrint(
                     '========== [ContactPage Supabase profile] ==========',
                   );
@@ -74,39 +84,48 @@ class ContactPage extends StatelessWidget {
                   );
                 }
 
-                // Helper for safe values (only used when profile != null)
+                // Helper for safe values when profile != null.
+                // If the DB string is null/empty, we return a placeholder
+                // "loading" string, which will later trigger the loading state
+                // inside the contact info card if any field is unusable.
                 String valueOr(String? raw, String fallback) {
                   final v = raw?.trim();
                   if (v == null || v.isEmpty) return fallback;
                   return v;
                 }
 
-                // These will stay null if profile is null
+                // These remain null when profile == null; we use that
+                // to decide whether to show the loading variant of the card.
                 String? displayName;
                 String? email;
                 String? phone;
 
                 if (profile != null) {
+                  // 1) Name logic: prefer fullName if non-empty,
+                  //    otherwise build "firstName lastName".
                   final fullName = profile.fullName.trim();
-                  final firstName = valueOr(profile.firstName, 'Gafar');
-                  final lastName = valueOr(profile.lastName, 'Razak');
+                  final firstName = valueOr(profile.firstName, 'loading');
+                  final lastName = valueOr(profile.lastName, 'loading');
 
                   displayName = fullName.isNotEmpty
                       ? fullName
                       : '$firstName $lastName';
 
+                  // 2) Email: trim the stored value; if empty, use "loading"
+                  //    so we detect that it isn't ready for display yet.
                   final emailRaw = profile.email.trim();
-                  email = emailRaw.isEmpty
-                      ? 'razakgafar98@outlook.com'
-                      : emailRaw;
+                  email = emailRaw.isEmpty ? 'loading' : emailRaw;
 
-                  // Prefer E.164, then legacy phone, then fallback
-                  final phoneRaw =
-                      (profile.phoneE164 ?? profile.phone)?.trim() ?? '';
-                  phone = phoneRaw.isEmpty ? '+44 7881 169 965' : phoneRaw;
+                  // 3) Phone: use phoneE164 only.
+                  //    If it's empty, we store "loading" to signal
+                  //    that the value is not ready for display.
+                  final phoneRaw = profile.phoneE164?.trim() ?? '';
+                  phone = phoneRaw.isEmpty ? 'loading' : phoneRaw;
                 }
 
-                // 🧾 Log final values (can be null if profile null)
+                // 🧾 Log final values that will be passed into the card.
+                //     If any of these is null, the card will show a small
+                //     progress indicator instead of real contact info.
                 debugPrint(
                   '========== [ContactPage display values] ==========',
                 );
@@ -115,10 +134,12 @@ class ContactPage extends StatelessWidget {
                 debugPrint('phone       : ${phone ?? '(null)'}');
                 debugPrint('=================================================');
 
-                // Decide what to show in the contact details card
+                // Decide what to show in the contact details card:
+                // - If any of the three values is null → use the .loading()
+                //   constructor, which shows a small spinner + "Loading contact details..."
+                // - Otherwise → render the normal card with icons + text.
                 Widget contactDetailsCard;
                 if (displayName == null || email == null || phone == null) {
-                  // ❗Profile missing → show a small loading row in the card
                   contactDetailsCard = _ContactInfoCard.loading(
                     textTheme: textTheme,
                     colorScheme: colorScheme,
@@ -133,6 +154,10 @@ class ContactPage extends StatelessWidget {
                   );
                 }
 
+                // Final page layout:
+                //  - Title + explanatory subtitle
+                //  - Contact details card (name/email/phone/response time)
+                //  - Contact form card ("Send a message")
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -151,12 +176,12 @@ class ContactPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // ⭐ NEW: your info as a themed card
+                    // ⭐ Your info as a themed card (or a small loading row)
                     contactDetailsCard,
 
                     const SizedBox(height: 24),
 
-                    // Existing message form card
+                    // Message form card
                     Card(
                       elevation: 8,
                       shape: RoundedRectangleBorder(
@@ -184,6 +209,11 @@ class ContactPage extends StatelessWidget {
   }
 }
 
+/// Contact info card
+/// -----------------
+/// Has two modes:
+///  - loading: shows a small spinner + "Loading contact details..."
+///  - normal : shows name, email, phone + response time text.
 class _ContactInfoCard extends StatelessWidget {
   final TextTheme textTheme;
   final ColorScheme colorScheme;
@@ -224,6 +254,7 @@ class _ContactInfoCard extends StatelessWidget {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         child: isLoading
+            // 🔄 Loading variant: small spinner + "Loading contact details..."
             ? Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -239,6 +270,7 @@ class _ContactInfoCard extends StatelessWidget {
                   ),
                 ],
               )
+            // ✅ Normal variant: actual contact info + response time
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -278,6 +310,7 @@ class _ContactInfoCard extends StatelessWidget {
   }
 }
 
+/// Single row with an icon + text, used inside the contact info card.
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
