@@ -1,0 +1,92 @@
+Flutter crash report.
+Please report a bug at https://github.com/flutter/flutter/issues.
+
+## command
+
+flutter run -d chrome --dart-define=SUPABASE_URL=https://nxylrjeaccmtezlrxwhy.supabase.co --dart-define=SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54eWxyamVhY2NtdGV6bHJ4d2h5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNTU3OTAsImV4cCI6MjA3NzkzMTc5MH0.9XfLKWlxOAm_IzYVS-0t0nh26JJ8mppCYQ3Q_a4uT30
+
+## exception
+
+DartDevelopmentServiceException: DartDevelopmentServiceException: Failed to start Dart Development Service
+
+```
+```
+
+## flutter doctor
+
+```
+[32m[✓][39m Flutter (Channel stable, 3.38.1, on macOS 15.6
+    24G5065c darwin-x64, locale en-GB) [7.7s]
+    [32m•[39m Flutter version 3.38.1 on channel stable at
+      /Users/macbook/development/flutter
+    [32m•[39m Upstream repository
+      https://github.com/flutter/flutter.git
+    [32m•[39m Framework revision b45fa18946 (5 days ago),
+      2025-11-12 22:09:06 -0600
+    [32m•[39m Engine revision b5990e5ccc
+    [32m•[39m Dart version 3.10.0
+    [32m•[39m DevTools version 2.51.1
+    [32m•[39m Feature flags: enable-web, enable-linux-desktop,
+      enable-macos-desktop, enable-windows-desktop,
+      enable-android, enable-ios, cli-animations,
+      enable-native-assets, omit-legacy-version-file,
+      enable-lldb-debugging
+
+[33m[!][39m Android toolchain - develop for Android devices
+    (Android SDK version 35.0.0) [11.4s]
+    [32m•[39m Android SDK at /Users/macbook/Library/Android/sdk
+    [32m•[39m Emulator version 35.2.10.0 (build_id 12414864)
+      (CL:N/A)
+    [31m✗[39m Flutter requires Android SDK 36 and the Android
+      BuildTools 28.0.3
+      To update the Android SDK visit
+      https://flutter.dev/to/macos-android-setup for
+      detailed instructions.
+    [33m![39m Some Android licenses not accepted. To resolve this,
+      run: flutter doctor --android-licenses
+
+[33m[!][39m Xcode - develop for iOS and macOS (Xcode 26.1.1)
+    [10.9s]
+    [32m•[39m Xcode at /Applications/Xcode.app/Contents/Developer
+    [32m•[39m Build 17B100
+    [33m![39m iOS 26.1 Simulator not installed; this may be
+      necessary for iOS and macOS development.
+      To download and install the platform, open Xcode,
+      select Xcode > Settings > Components,
+      and click the GET button for the required platform.
+
+      For more information, please visit:
+        https://developer.apple.com/documentation/xcode/in
+        stalling-additional-simulator-runtimes
+    [31m✗[39m CocoaPods not installed.
+        CocoaPods is a package manager for iOS or macOS
+        platform code.
+        Without CocoaPods, plugins will not work on iOS or
+        macOS.
+        For more info, see
+        https://flutter.dev/to/platform-plugins
+      For installation instructions, see
+      https://guides.cocoapods.org/using/getting-started.h
+      tml#installation
+
+[32m[✓][39m Chrome - develop for the web [19ms]
+    [32m•[39m Chrome at /Applications/Google
+      Chrome.app/Contents/MacOS/Google Chrome
+
+[32m[✓][39m Connected device (2 available) [7.8s]
+    [32m•[39m macOS (desktop) • macos  • darwin-x64     • macOS
+      15.6 24G5065c darwin-x64
+    [32m•[39m Chrome (web)    • chrome • web-javascript • Google
+      Chrome 142.0.7444.162
+    [33m![39m Error: Browsing on the local area network for
+      iPhone. Ensure the device is unlocked and attached
+      with a cable or associated with the same local area
+      network as this Mac.
+      The device must be opted into Developer Mode to
+      connect wirelessly. (code -27)
+
+[32m[✓][39m Network resources [763ms]
+    [32m•[39m All expected network resources are available.
+
+[33m![39m Doctor found issues in 2 categories.
+```
