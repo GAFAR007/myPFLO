@@ -1,41 +1,42 @@
 // lib/features/home/widgets/hire_me_button.dart
 //
-// "Hire Me" pill button for the top-right of the AppBar.
-// Navigation is handled by whoever passes the onPressed callback.
+// Small "Hire me" pill button used in the AppBar.
+// - Uses theme colours (primaryContainer / onPrimaryContainer)
+//   so it looks good in both light and dark mode.
+// - Uses an emoji icon to keep it friendly and compact.
 
 import 'package:flutter/material.dart';
 
 class HireMeButton extends StatelessWidget {
-  const HireMeButton({super.key, required this.onPressed});
+  final VoidCallback? onPressed;
 
-  final VoidCallback onPressed;
+  const HireMeButton({super.key, this.onPressed});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return TextButton(
+    return TextButton.icon(
       onPressed: onPressed,
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+      icon: const Text(
+        '💼', // you can change to 💼 or ✉️ if you prefer
+        style: TextStyle(fontSize: 14),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.chat_bubble_outline, size: 18),
-          const SizedBox(width: 8),
-          Text(
-            'HIRE ME',
-            style: textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.0,
-            ),
-          ),
-        ],
+      label: const Text('Hire me'),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        minimumSize: Size.zero, // let it shrink to content
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        backgroundColor: colorScheme.primaryContainer.withOpacity(
+          theme.brightness == Brightness.dark ? 0.8 : 1.0,
+        ),
+        foregroundColor: colorScheme.onPrimaryContainer,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+        textStyle: theme.textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.3,
+        ),
       ),
     );
   }
