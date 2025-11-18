@@ -102,8 +102,10 @@ class HomeDrawer extends StatelessWidget {
                                 ),
                                 onPressed: () {
                                   debugPrint('[Drawer] View profile tapped');
-                                  // TODO: navigate to About/Profile page
+                                  Navigator.of(context).pop(); // close drawer
+                                  Navigator.of(context).pushNamed('/profile');
                                 },
+
                                 child: Text(
                                   'View profile',
                                   style: textTheme.bodySmall?.copyWith(
@@ -128,6 +130,12 @@ class HomeDrawer extends StatelessWidget {
                 icon: Icons.dashboard_outlined,
                 label: 'Overview',
                 routeName: '/',
+              ),
+              _drawerItem(
+                context,
+                icon: Icons.person,
+                label: 'Profile',
+                routeName: '/profile', // 👈 navigates to ProfilePage
               ),
               _drawerItem(
                 context,

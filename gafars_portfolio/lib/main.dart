@@ -5,6 +5,7 @@
 // - Admin setup is at '/admin' and is protected by AuthGate.
 
 import 'package:flutter/material.dart';
+import 'package:gafars_portfolio/features/profile/view/profile_page.dart';
 
 import 'data/supabase/supabase_client.dart';
 import 'features/auth/widgets/auth_gate.dart';
@@ -46,6 +47,7 @@ class MyApp extends StatelessWidget {
             '/about': (context) => const AboutPage(),
             '/contact': (context) => const ContactPage(),
             '/resume': (context) => const ResumePage(),
+            '/profile': (context) => const ProfilePage(),
             '/admin': (context) => const AuthGate(child: SetupPage()),
           },
         );
