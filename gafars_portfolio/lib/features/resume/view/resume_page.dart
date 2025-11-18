@@ -6,11 +6,13 @@
 //     • CV intro + highlights
 //     • "View CV" + "Download CV" buttons
 // - Layout adapts nicely to both big and small screens.
+// - Uses AppScaffold so AppBar + Drawer + Hire Me are centralised.
 
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:web/web.dart' as web;
 import 'package:flutter/material.dart';
 
+import '../../shell/app_scaffold.dart';
 import '../../../data/supabase/profile_repository.dart';
 import '../../../data/supabase/models/site_profile.dart';
 
@@ -94,14 +96,8 @@ class _ResumePageState extends State<ResumePage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('CV / Resume'),
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-      ),
+    return AppScaffold(
+      title: 'CV / Resume',
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -215,7 +211,8 @@ class _ResumePageState extends State<ResumePage> {
         ),
         const SizedBox(height: 8),
         Text(
-          'A snapshot of my journey across business management, software engineering, and care.',
+          // 🔧 Updated text so it’s not just "care"
+          'A snapshot of my journey across business management, software engineering, and real-world product delivery.',
           style: textTheme.bodyMedium,
         ),
         const SizedBox(height: 20),
@@ -228,9 +225,7 @@ class _ResumePageState extends State<ResumePage> {
             _InfoChip(label: 'MSc Business Management'),
             _InfoChip(label: 'Mobile Software Engineer'),
             _InfoChip(label: 'Flutter • React • Node'),
-            _InfoChip(label: '5+ Years Experience'),
-                  
-
+            _InfoChip(label: 'Care & Support Experience'),
           ],
         ),
 
@@ -240,7 +235,6 @@ class _ResumePageState extends State<ResumePage> {
         Text(
           '• Key projects in Flutter, React, and Node.js\n'
           '• Management and leadership experience\n'
-      
           '• Education, certifications, and core skills',
           style: textTheme.bodySmall,
         ),
@@ -259,7 +253,7 @@ class _ResumePageState extends State<ResumePage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.picture_as_pdf, size: 64),
+          const Icon(Icons.picture_as_pdf, size: 64),
           const SizedBox(height: 12),
           Text(
             'Gafar Temitayo Razak – CV',

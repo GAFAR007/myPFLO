@@ -14,6 +14,8 @@ import 'features/projects/view/projects_page.dart';
 import 'features/about/view/about_page.dart';
 import 'features/contact/view/contact_page.dart';
 import 'features/resume/view/resume_page.dart';
+import 'theme/app_theme.dart';
+import 'theme/theme_controller.dart';
 
 void main() {
   // Fail early if env vars are missing
@@ -27,26 +29,26 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Gafars Portfolio',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-
-      // Start on the public home page
-      initialRoute: '/',
-
-      // Simple named routes:
-      routes: {
-        '/': (context) => const HomePage(),
-        '/projects': (context) => const ProjectsPage(),
-        '/about': (context) => const AboutPage(),
-        '/contact': (context) => const ContactPage(),
-        '/resume': (context) => const ResumePage(),
-        
-        // Admin-only setup area behind AuthGate
-        '/admin': (context) => const AuthGate(child: SetupPage()),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.themeMode,
+      builder: (context, mode, _) {
+        return MaterialApp(
+          title: 'Gafars Portfolio',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: mode, // 👈 controlled by the toggle
+          // your routes/initialRoute stay the same
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const HomePage(),
+            '/projects': (context) => const ProjectsPage(),
+            '/about': (context) => const AboutPage(),
+            '/contact': (context) => const ContactPage(),
+            '/resume': (context) => const ResumePage(),
+            '/admin': (context) => const AuthGate(child: SetupPage()),
+          },
+        );
       },
     );
   }

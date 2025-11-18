@@ -1,16 +1,15 @@
 // lib/features/home/view/home_page.dart
 //
 // HomePage – responsive hero (desktop + mobile)
+// Uses AppScaffold so AppBar + Drawer + Hire Me button are centralised.
 
 import 'package:flutter/material.dart';
-import 'package:gafars_portfolio/features/home/widgets/contact_form_page.dart';
+
+import '../../shell/app_scaffold.dart';
 
 import '../../../data/supabase/profile_repository.dart';
 import '../../../data/supabase/models/site_profile.dart';
 import '../widgets/displayavarter.dart';
-import '../widgets/menu_button.dart';
-import '../widgets/hire_me_button.dart';
-import '../widgets/home_drawer.dart'; // 👈 NEW
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -18,36 +17,8 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final repo = ProfileRepository();
-    final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface.withOpacity(0.2),
-      drawer: const HomeDrawer(), // 👈 NEW
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: colorScheme.surface,
-        // 👇 give the MENU text enough width so it doesn’t look broken
-        leadingWidth: 90,
-        leading: const Padding(
-          padding: EdgeInsets.only(left: 8),
-          child: MenuButton(),
-        ),
-        title: const Text('Gafars Technologies'),
-        centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: HireMeButton(
-              // 👇 HIRE ME → navigate to form page
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ContactFormPage()),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+    return AppScaffold(
       body: FutureBuilder<SiteProfile?>(
         future: repo.fetchProfile(),
         builder: (context, snapshot) {
@@ -79,35 +50,34 @@ class HomePage extends StatelessWidget {
           }
 
           // ⭐ Helper: safely get trimmed value or fallback
-          String _valueOr(String? raw, String fallback) {
+          String valueOr(String? raw, String fallback) {
             final v = raw?.trim();
             if (v == null || v.isEmpty) return fallback;
             return v;
           }
 
           // ✅ Pull ONLY what we need for this hero
-          final firstName = _valueOr(profile.firstName, 'Razak');
-          final lastName = _valueOr(profile.lastName, 'Temitayo');
+          final firstName = valueOr(profile.firstName, 'Razak');
+          final lastName = valueOr(profile.lastName, 'Temitayo');
 
-          // fullName can be null in DB, so handle it safely
-          final fullNameRaw = profile.fullName;
-          final fullName = fullNameRaw.trim();
+          final fullName = profile.fullName.trim();
 
           final displayName = fullName.isNotEmpty
               ? fullName
               : '$firstName $lastName';
 
-          final title = _valueOr(
+          // 🔧 Updated so it’s not just Flutter/Supabase
+          final title = valueOr(
             profile.title,
-            'Mobile Software Engineer | Flutter · Supabase · UI/UX',
+            'Mobile & Web Engineer | Flutter · Supabase · Node.js · UI/UX',
           );
 
-          final tagline = _valueOr(
+          final tagline = valueOr(
             profile.tagline,
             'Blending business management with modern mobile & web experiences.',
           );
 
-          final location = _valueOr(
+          final location = valueOr(
             profile.location,
             'Wolverhampton, United Kingdom',
           );
@@ -127,6 +97,8 @@ class HomePage extends StatelessWidget {
           return LayoutBuilder(
             builder: (context, constraints) {
               final isNarrow = constraints.maxWidth < 700;
+              final theme = Theme.of(context);
+              final colorScheme = theme.colorScheme;
 
               // Center content and keep it from stretching too wide on big screens
               return Center(
@@ -143,14 +115,17 @@ class HomePage extends StatelessWidget {
                         vertical: 32,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        // ✅ Use themed surface (nice in light & dark)
+                        color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
-                          BoxShadow(
-                            blurRadius: 24,
-                            offset: const Offset(0, 12),
-                            color: Colors.black.withOpacity(0.06),
-                          ),
+                          // Only add big drop shadow in light mode
+                          if (theme.brightness == Brightness.light)
+                            BoxShadow(
+                              blurRadius: 24,
+                              offset: const Offset(0, 12),
+                              color: Colors.black.withOpacity(0.06),
+                            ),
                         ],
                       ),
                       child: isNarrow
@@ -228,7 +203,8 @@ class _HeroTextBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final primary = Theme.of(context).colorScheme.primary;
+    final colorScheme = Theme.of(context).colorScheme;
+    final primary = colorScheme.primary;
 
     return Column(
       crossAxisAlignment: isNarrow
@@ -281,9 +257,12 @@ class _HeroTextBlock extends StatelessWidget {
 
         // Location line
         Text(
-          ' $location',
+          location,
           textAlign: isNarrow ? TextAlign.center : TextAlign.left,
-          style: textTheme.bodyMedium?.copyWith(color: Colors.black54),
+          style: textTheme.bodyMedium?.copyWith(
+            // ✅ Use themed subtle colour
+            color: colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
