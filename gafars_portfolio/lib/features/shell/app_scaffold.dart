@@ -38,7 +38,7 @@ class AppScaffold extends StatelessWidget {
           padding: EdgeInsets.only(left: 8),
           child: MenuButton(),
         ),
-        title: Text(title ?? 'Gafars Technologies'),
+        title: Text(title ?? 'Razak Temitayo Gafar | Portfolio'),
         centerTitle: true,
         actions: [
           const ThemeToggleButton(), // 🌗 new toggle

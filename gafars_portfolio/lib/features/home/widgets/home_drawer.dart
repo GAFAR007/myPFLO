@@ -174,7 +174,7 @@ class HomeDrawer extends StatelessWidget {
                 context,
                 icon: Icons.help_outline,
                 label: 'Help',
-                // Later: routeName: '/help',
+                routeName: '/help', // 👈 reuse Contact page UI for now
               ),
             ],
           ),

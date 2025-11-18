@@ -46,6 +46,7 @@ class MyApp extends StatelessWidget {
             '/projects': (context) => const ProjectsPage(),
             '/about': (context) => const AboutPage(),
             '/contact': (context) => const ContactPage(),
+            '/help': (context) => const ContactPage(), //
             '/resume': (context) => const ResumePage(),
             '/profile': (context) => const ProfilePage(),
             '/admin': (context) => const AuthGate(child: SetupPage()),
