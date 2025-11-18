@@ -4,6 +4,7 @@
 // - Reusable form widget used on the public Contact page.
 // - Collects name, email, subject (optional), and message.
 // - Sends messages to Supabase via ContactRepository (contact_messages table).
+// - Shows a Back button (maybePop) and a Send button with a loading state.
 
 import 'package:flutter/material.dart';
 
@@ -189,19 +190,31 @@ class _ContactFormPageState extends State<ContactFormPage> {
               ),
               const SizedBox(height: 20),
 
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton.icon(
-                  onPressed: _submitting ? null : _submit,
-                  icon: _submitting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.send_rounded),
-                  label: Text(_submitting ? 'Sending…' : 'Send message'),
-                ),
+              // Actions row: Back + Send message
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      // Go back to the previous page if possible.
+                      // On web this will pop the last route if one exists.
+                      Navigator.of(context).maybePop();
+                    },
+                    icon: const Icon(Icons.arrow_back, size: 18),
+                    label: const Text('Back'),
+                  ),
+                  FilledButton.icon(
+                    onPressed: _submitting ? null : _submit,
+                    icon: _submitting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send_rounded),
+                    label: Text(_submitting ? 'Sending…' : 'Send message'),
+                  ),
+                ],
               ),
             ],
           ),
