@@ -28,7 +28,7 @@ class AppScaffold extends StatelessWidget {
 
     return Scaffold(
       // Softer background instead of that harsh grey.
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
       drawer: const HomeDrawer(),
       appBar: AppBar(
         elevation: 0,

@@ -237,7 +237,7 @@ class _ProfileAvatar extends StatelessWidget {
 
     return CircleAvatar(
       radius: 32,
-      backgroundColor: colorScheme.surfaceVariant,
+      backgroundColor: colorScheme.surfaceContainerHighest,
       foregroundImage: NetworkImage(avatarUrl!.trim()),
       child: Icon(Icons.person, size: 32, color: colorScheme.onSurfaceVariant),
     );
