@@ -399,10 +399,7 @@ class _SetupPageState extends State<SetupPage> {
                                           'first_name': _first.text.trim(),
                                           'middle_name': _middle.text.trim(),
                                           'last_name': _last.text.trim(),
-                                          'date_of_birth': _dob == null
-                                              ? null
-                                              : _dob!
-                                                    .toIso8601String()
+                                          'date_of_birth': _dob?.toIso8601String()
                                                     .split('T')
                                                     .first,
                                         }, 'Basic information'),

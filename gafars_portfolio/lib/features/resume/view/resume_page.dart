@@ -188,7 +188,7 @@ class _ResumePageState extends State<ResumePage> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Theme.of(context).colorScheme.surfaceVariant,
+                  Theme.of(context).colorScheme.surfaceContainerHighest,
                   Theme.of(context).colorScheme.surface,
                 ],
               ),

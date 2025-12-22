@@ -190,7 +190,7 @@ class ContactPage extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(24),
-                          color: colorScheme.surfaceVariant.withOpacity(
+                          color: colorScheme.surfaceContainerHighest.withOpacity(
                             theme.brightness == Brightness.dark ? 0.9 : 1.0,
                           ),
                         ),
@@ -248,7 +248,7 @@ class _ContactInfoCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          color: colorScheme.surfaceVariant.withOpacity(
+          color: colorScheme.surfaceContainerHighest.withOpacity(
             theme.brightness == Brightness.dark ? 0.9 : 1.0,
           ),
         ),
