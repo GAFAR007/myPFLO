@@ -67,6 +67,14 @@ class _SetupPageState extends State<SetupPage> {
   final _website = TextEditingController();
   final _location = TextEditingController();
   final _avatarUrl = TextEditingController();
+// ------------------------------------------
+// Projects (Dev only)
+// ------------------------------------------
+final _projectTitle = TextEditingController();
+final _projectSubtitle = TextEditingController();
+final _projectDescription = TextEditingController();
+final _projectUrl = TextEditingController();
+final _projectTags = TextEditingController(); // comma-separated
 
   // Loading / saving + status message
   bool _loading = true; // page-level loading (health + prefill)
@@ -222,6 +230,11 @@ class _SetupPageState extends State<SetupPage> {
       _website,
       _location,
       _avatarUrl,
+      _projectTitle,
+      _projectSubtitle,
+      _projectDescription,
+      _projectUrl,
+      _projectTags,
     ]) {
       c.dispose();
     }
@@ -295,6 +308,62 @@ class _SetupPageState extends State<SetupPage> {
       setState(() => _saving = false);
     }
   }
+// ------------------------------------------
+// SAVE PROJECT (projects table)
+// ------------------------------------------
+Future<void> _saveProject() async {
+  final title = _projectTitle.text.trim();
+
+  if (title.isEmpty) {
+    setState(() => _status = '❌ Project title is required.');
+    return;
+  }
+
+  final tags = _projectTags.text
+      .split(',')
+      .map((t) => t.trim())
+      .where((t) => t.isNotEmpty)
+      .toList();
+
+  setState(() {
+    _saving = true;
+    _status = null;
+  });
+
+  try {
+    debugPrint('[PROJECT] inserting project');
+    debugPrint('title=$title');
+    debugPrint('tags=$tags');
+
+    await Supa.client.from('projects').insert({
+      'title': title,
+      'subtitle': _emptyToNull(_projectSubtitle.text),
+      'description': _emptyToNull(_projectDescription.text),
+      'url': _emptyToNull(_projectUrl.text),
+      'tags': tags,
+      'is_active': true,
+      'sort_order': 0,
+    });
+
+    _projectTitle.clear();
+    _projectSubtitle.clear();
+    _projectDescription.clear();
+    _projectUrl.clear();
+    _projectTags.clear();
+
+    setState(() => _status = '✅ Project added.');
+
+    debugPrint('[PROJECT] insert success');
+  } catch (e, st) {
+    debugPrint('[PROJECT] insert failed');
+    debugPrint(e.toString());
+    debugPrint(st.toString());
+
+    setState(() => _status = '❌ Failed to add project.');
+  } finally {
+    setState(() => _saving = false);
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -615,6 +684,51 @@ class _SetupPageState extends State<SetupPage> {
                               ),
 
                               const Divider(height: 24),
+const Divider(height: 24),
+
+// ------------------------------------------
+// PROJECTS (DEV ONLY)
+// ------------------------------------------
+Text(
+  'Projects',
+  style: theme.textTheme.titleMedium?.copyWith(
+    fontWeight: FontWeight.w600,
+  ),
+),
+const SizedBox(height: 8),
+
+LabeledField(
+  label: 'Project title',
+  controller: _projectTitle,
+),
+LabeledField(
+  label: 'Subtitle',
+  controller: _projectSubtitle,
+),
+LabeledField(
+  label: 'Description',
+  controller: _projectDescription,
+  maxLines: 4,
+),
+LabeledField(
+  label: 'Project URL',
+  controller: _projectUrl,
+  validator: urlValidator,
+),
+LabeledField(
+  label: 'Tags (comma separated)',
+  controller: _projectTags,
+  hint: 'flutter, supabase, web',
+),
+
+Align(
+  alignment: Alignment.centerRight,
+  child: TextButton.icon(
+    onPressed: _saving ? null : _saveProject,
+    icon: const Icon(Icons.add, size: 16),
+    label: const Text('Add project'),
+  ),
+),
 
                               // ------------------------------------------
                               // MEDIA (Avatar + CV)

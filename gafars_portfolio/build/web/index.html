@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html>
 <head>
   <base href="/" />
 
@@ -8,33 +10,38 @@
   <title>Gafars Technologies | Razak Gafar Temitayo</title>
   <meta
     name="description"
-    content="Gafars Technologies — Software Engineer & Business Professional. Real projects, experience, and contact details." />
+    content="Gafars Technologies — Software Engineer & Business Professional. Real projects, experience, and contact details."
+  />
 
-  <!-- Open Graph (WhatsApp, Facebook, LinkedIn) -->
+  <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://gafarstechnologies.com/" />
   <meta property="og:title" content="Gafars Technologies | Razak Gafar Temitayo" />
   <meta
     property="og:description"
-    content="Personal portfolio showcasing real projects, experience, and professional background." />
+    content="Personal portfolio showcasing real projects, experience, and professional background."
+  />
   <meta
     property="og:image"
-    content="https://gafarstechnologies.com/icons/og-image.png" />
+    content="https://gafarstechnologies.com/icons/og-image.png"
+  />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Gafars Technologies | Razak Gafar Temitayo" />
   <meta
     name="twitter:description"
-    content="Software Engineer | Flutter | Supabase | Web & Mobile" />
+    content="Software Engineer | Flutter | Supabase | Web & Mobile"
+  />
   <meta
     name="twitter:image"
-    content="https://gafarstechnologies.com/icons/og-image.png" />
+    content="https://gafarstechnologies.com/icons/og-image.png"
+  />
 
-  <!-- Flutter renderer -->
+  <!-- Flutter -->
   <meta name="flutter-web-renderer" content="html" />
 
-  <!-- iOS / PWA -->
+  <!-- PWA -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="Gafars Technologies" />
@@ -45,3 +52,23 @@
 
   <link rel="manifest" href="manifest.json" />
 </head>
+
+<body>
+  <!-- Flutter bootstrap -->
+  <script src="flutter.js" defer></script>
+  <script>
+    window.addEventListener('load', function () {
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: null,
+        },
+        onEntrypointLoaded: function (engineInitializer) {
+          engineInitializer.initializeEngine().then(function (appRunner) {
+            appRunner.runApp();
+          });
+        },
+      });
+    });
+  </script>
+</body>
+</html>
