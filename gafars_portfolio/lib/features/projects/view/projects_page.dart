@@ -4,84 +4,72 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../data/api/models/project.dart';
 import '../../../data/api/projects_repository.dart';
 import '../../shell/app_scaffold.dart';
+import '../../shell/public_page_frame.dart';
 
 class ProjectsPage extends StatelessWidget {
   const ProjectsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final repository = ProjectsRepository();
+    final textTheme = Theme.of(context).textTheme;
 
     return AppScaffold(
       title: 'Projects • Gafars Technologies',
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000),
-            child: FutureBuilder<List<PortfolioProject>>(
-              future: repository.fetchProjects(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+      body: PublicPageFrame(
+        badge: 'Selected Work',
+        title: 'Projects that show how I think, not just what I code.',
+        description:
+            'Each project here reflects a different type of product problem: public-facing platforms, operational systems, and education workflows. The goal is consistent execution and a finish that feels credible.',
+        child: FutureBuilder<List<PortfolioProject>>(
+          future: repository.fetchProjects(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-                if (snapshot.hasError) {
-                  return Text(
-                    'Could not load projects right now.',
-                    style: textTheme.bodyMedium,
-                  );
-                }
+            if (snapshot.hasError) {
+              return SurfacePanel(
+                child: Text(
+                  'Could not load projects right now.',
+                  style: textTheme.bodyMedium,
+                ),
+              );
+            }
 
-                final projects = snapshot.data ?? const <PortfolioProject>[];
+            final projects = snapshot.data ?? const <PortfolioProject>[];
+            if (projects.isEmpty) {
+              return SurfacePanel(
+                child: Text(
+                  'No projects have been published yet.',
+                  style: textTheme.bodyMedium,
+                ),
+              );
+            }
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Selected Projects',
-                      style: textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'A few examples of how I combine business thinking with modern mobile and web development.',
-                      style: textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 24),
-                    if (projects.isEmpty)
-                      Text(
-                        'No projects have been published yet.',
-                        style: textTheme.bodyMedium,
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final useTwoColumns = constraints.maxWidth >= 900;
+                final spacing = 20.0;
+                final width = useTwoColumns
+                    ? (constraints.maxWidth - spacing) / 2
+                    : constraints.maxWidth;
+
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: projects
+                      .map(
+                        (project) => SizedBox(
+                          width: width,
+                          child: ProjectCard(project: project),
+                        ),
                       )
-                    else
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final isWide = constraints.maxWidth > 800;
-
-                          return Wrap(
-                            spacing: 16,
-                            runSpacing: 16,
-                            children: projects.map((project) {
-                              final width = isWide
-                                  ? (constraints.maxWidth - 16) / 2
-                                  : constraints.maxWidth;
-
-                              return SizedBox(
-                                width: width,
-                                child: ProjectCard(project: project),
-                              );
-                            }).toList(),
-                          );
-                        },
-                      ),
-                  ],
+                      .toList(),
                 );
               },
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
@@ -113,82 +101,91 @@ class ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final colorScheme = theme.colorScheme;
+    final hasLink = (project.url ?? '').trim().isNotEmpty;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: () => _openUrl(context),
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
+    return SurfacePanel(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                project.title,
-                style: textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(project.title, style: textTheme.headlineMedium),
+                    if ((project.subtitle ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        project.subtitle!,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              if ((project.subtitle ?? '').isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  project.subtitle!,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary,
-                  ),
-                ),
-              ],
-              if ((project.description ?? '').isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(project.description!, style: textTheme.bodyMedium),
-              ],
-              if (project.tags.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: project.tags
-                      .map(
-                        (tag) => Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(999),
-                            color: colorScheme.primary.withValues(alpha: 0.08),
-                          ),
-                          child: Text(
-                            tag,
-                            style: textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ],
-              if ((project.url ?? '').isNotEmpty) ...[
-                const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: () => _openUrl(context),
-                  child: Text(
-                    project.url!,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.primary,
-                      decoration: TextDecoration.underline,
+              if (hasLink)
+                Container(
+                  decoration: BoxDecoration(
+                    color: colorScheme.secondaryContainer.withValues(
+                      alpha: 0.7,
                     ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: IconButton(
+                    onPressed: () => _openUrl(context),
+                    icon: const Icon(Icons.north_east_rounded),
+                    tooltip: 'Open project',
                   ),
                 ),
-              ],
             ],
           ),
-        ),
+          if ((project.description ?? '').isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              project.description!,
+              style: textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+          if (project.tags.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: project.tags
+                  .map((tag) => Chip(label: Text(tag)))
+                  .toList(),
+            ),
+          ],
+          const SizedBox(height: 22),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                hasLink ? 'Live project' : 'Private build',
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if (hasLink)
+                TextButton.icon(
+                  onPressed: () => _openUrl(context),
+                  icon: const Icon(Icons.link_rounded),
+                  label: const Text('Open'),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

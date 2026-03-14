@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 class HireMeButton extends StatelessWidget {
-  const HireMeButton({super.key, this.onPressed});
+  const HireMeButton({super.key, this.onPressed, this.compact = false});
 
   final VoidCallback? onPressed;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -13,11 +14,14 @@ class HireMeButton extends StatelessWidget {
     return FilledButton.icon(
       onPressed: onPressed,
       icon: const Icon(Icons.north_east_rounded, size: 18),
-      label: const Text('Hire me'),
+      label: Text(compact ? 'Hire' : 'Hire me'),
       style: FilledButton.styleFrom(
         backgroundColor: colorScheme.secondary,
         foregroundColor: colorScheme.onSecondary,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 14 : 16,
+          vertical: compact ? 12 : 12,
+        ),
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),

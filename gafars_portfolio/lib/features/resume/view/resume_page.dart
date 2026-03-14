@@ -1,20 +1,11 @@
-// lib/features/resume/view/resume_page.dart
-//
-// Public ResumePage for your portfolio visitors.
-// - Fetches your SiteProfile from Supabase.
-// - Shows a modern techy layout with:
-//     • CV intro + highlights
-//     • "View CV" + "Download CV" buttons
-// - Layout adapts nicely to both big and small screens.
-// - Uses AppScaffold so AppBar + Drawer + Hire Me are centralised.
-
-import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
-import 'package:web/web.dart' as web;
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../shell/app_scaffold.dart';
 import '../../../data/api/models/site_profile.dart';
 import '../../../data/api/profile_repository.dart';
+import '../../shell/app_scaffold.dart';
+import '../../shell/public_page_frame.dart';
 
 class ResumePage extends StatefulWidget {
   const ResumePage({super.key});
@@ -41,18 +32,17 @@ class _ResumePageState extends State<ResumePage> {
       final profile = await _repo.fetchProfile();
 
       if (kDebugMode) {
-        debugPrint('ResumePage → id: ${profile?.id}');
-        debugPrint('ResumePage → cvUrl: ${profile?.cvUrl}');
+        debugPrint('ResumePage -> id: ${profile?.id}');
+        debugPrint('ResumePage -> cvUrl: ${profile?.cvUrl}');
       }
 
+      if (!mounted) return;
       setState(() {
         _profile = profile;
         _loading = false;
       });
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('ResumePage error: $e');
-      }
+    } catch (error) {
+      if (!mounted) return;
       setState(() {
         _error = 'Something went wrong while loading the CV.';
         _loading = false;
@@ -60,263 +50,186 @@ class _ResumePageState extends State<ResumePage> {
     }
   }
 
-  void _openCv() {
-    final cvUrl = _profile?.cvUrl;
-    if (cvUrl == null || cvUrl.isEmpty) {
-      _showSnack('CV not available yet.');
+  Future<void> _openUrl(String? rawUrl, {bool download = false}) async {
+    final cvUrl = rawUrl?.trim() ?? '';
+    if (cvUrl.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('CV not available yet.')));
       return;
     }
 
-    if (kIsWeb) {
-      web.window.open(cvUrl, '_blank'); // full-page view in new tab
-    } else {
-      _showSnack('Open CV:\n$cvUrl');
+    final uri = Uri.parse(
+      download ? '$cvUrl?download=Gafar_Razak_CV.pdf' : cvUrl,
+    );
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not open CV link.')));
     }
-  }
-
-  void _downloadCv() {
-    final cvUrl = _profile?.cvUrl;
-    if (cvUrl == null || cvUrl.isEmpty) {
-      _showSnack('CV not available yet.');
-      return;
-    }
-
-    if (kIsWeb) {
-      final downloadUrl = '$cvUrl?download=Gafar_Razak_CV.pdf';
-      web.window.open(downloadUrl, '_blank');
-    } else {
-      _showSnack('Download CV from:\n$cvUrl');
-    }
-  }
-
-  void _showSnack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasCv = _profile?.cvUrl?.trim().isNotEmpty == true;
+
     return AppScaffold(
       title: 'CV / Resume',
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 980),
-            child: _buildBody(context),
-          ),
-        ),
-      ),
-    );
-  }
+      body: PublicPageFrame(
+        badge: 'Resume',
+        title: 'A concise view of skills, projects, and professional range.',
+        description:
+            'If you want a faster scan than the full portfolio, this section is meant to give you the core signal quickly: what I build, how I work, and where I can add value.',
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+            ? SurfacePanel(child: Text(_error!))
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  final stacked = constraints.maxWidth < 900;
 
-  Widget _buildBody(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_error != null) {
-      return Text(
-        _error!,
-        style: textTheme.bodyMedium,
-        textAlign: TextAlign.center,
-      );
-    }
-
-    final hasCv = _profile?.cvUrl != null && _profile!.cvUrl!.isNotEmpty;
-
-    if (!hasCv) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'CV coming soon',
-            style: textTheme.headlineSmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'I’m currently updating my CV.\n'
-            'Please check back again shortly.',
-            style: textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      );
-    }
-
-    // 🔹 Responsive card: row on big screens, column on small
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 720;
-        final compact = constraints.maxWidth < 600; // phones / small tablets
-
-        final content = isWide
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: _buildIntroPanel(textTheme, compact: compact),
-                  ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    flex: 4,
-                    child: _buildCvPanel(textTheme, compact: compact),
-                  ),
-                ],
-              )
-            : Column(
-                children: [
-                  _buildIntroPanel(textTheme, compact: compact),
-                  const SizedBox(height: 24),
-                  _buildCvPanel(textTheme, compact: compact),
-                ],
-              );
-
-        return Card(
-          elevation: 8,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.surfaceContainerHighest,
-                  Theme.of(context).colorScheme.surface,
-                ],
+                  return Flex(
+                    direction: stacked ? Axis.vertical : Axis.horizontal,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: stacked ? 0 : 5,
+                        child: SurfacePanel(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'What the CV covers',
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                'A snapshot across software engineering, product delivery, and management experience, with enough detail to make a hiring conversation concrete.',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              const SizedBox(height: 20),
+                              const Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: [
+                                  Chip(label: Text('Flutter')),
+                                  Chip(label: Text('Node.js')),
+                                  Chip(label: Text('MongoDB')),
+                                  Chip(label: Text('Product UX')),
+                                  Chip(label: Text('Leadership')),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+                              const _ResumeBullet(
+                                text:
+                                    'Real project work across web and mobile product delivery.',
+                              ),
+                              const _ResumeBullet(
+                                text:
+                                    'Experience turning operational needs into practical software systems.',
+                              ),
+                              const _ResumeBullet(
+                                text:
+                                    'A mix of business context and engineering execution.',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: stacked ? 0 : 20,
+                        height: stacked ? 20 : 0,
+                      ),
+                      Expanded(
+                        flex: stacked ? 0 : 4,
+                        child: SurfacePanel(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.picture_as_pdf_rounded,
+                                size: 72,
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Gafar Temitayo Razak – CV',
+                                style: Theme.of(context).textTheme.titleLarge,
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                hasCv
+                                    ? 'PDF hosted and ready to open.'
+                                    : 'CV not uploaded yet.',
+                                style: Theme.of(context).textTheme.bodySmall,
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 22),
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: [
+                                  FilledButton.icon(
+                                    onPressed: hasCv
+                                        ? () => _openUrl(_profile?.cvUrl)
+                                        : null,
+                                    icon: const Icon(Icons.open_in_new),
+                                    label: const Text('View CV'),
+                                  ),
+                                  OutlinedButton.icon(
+                                    onPressed: hasCv
+                                        ? () => _openUrl(
+                                            _profile?.cvUrl,
+                                            download: true,
+                                          )
+                                        : null,
+                                    icon: const Icon(Icons.download_rounded),
+                                    label: const Text('Download PDF'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
-            ),
-            padding: EdgeInsets.all(compact ? 16 : 24),
-            child: content,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildIntroPanel(TextTheme textTheme, {required bool compact}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Curriculum Vitae',
-          style: compact ? textTheme.headlineSmall : textTheme.headlineMedium,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          // 🔧 Updated text so it’s not just "care"
-          'A snapshot of my journey across business management, software engineering, and real-world product delivery.',
-          style: textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 20),
-
-        // Small techy chips
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: const [
-            _InfoChip(label: 'MSc Business Management'),
-            _InfoChip(label: 'Mobile Software Engineer'),
-            _InfoChip(label: 'Flutter • React • Node'),
-            _InfoChip(label: 'Care & Support Experience'),
-          ],
-        ),
-
-        const SizedBox(height: 24),
-        Text('What you’ll find inside', style: textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Text(
-          '• Key projects in Flutter, React, and Node.js\n'
-          '• Management and leadership experience\n'
-          '• Education, certifications, and core skills',
-          style: textTheme.bodySmall,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCvPanel(TextTheme textTheme, {required bool compact}) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: Colors.black.withOpacity(0.03),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.picture_as_pdf, size: 64),
-          const SizedBox(height: 12),
-          Text(
-            'Gafar Temitayo Razak – CV',
-            style: textTheme.titleMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'PDF • 1 file • Cloudinary storage',
-            style: textTheme.bodySmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-
-          // 🔹 Responsive buttons: wrap instead of overflow
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              SizedBox(
-                width: 160,
-                child: FilledButton.icon(
-                  onPressed: _openCv,
-                  icon: const Icon(Icons.open_in_new),
-                  label: const Text('View CV'),
-                ),
-              ),
-              SizedBox(
-                width: 160,
-                child: OutlinedButton.icon(
-                  onPressed: _downloadCv,
-                  icon: const Icon(Icons.download),
-                  label: const Text('Download PDF'),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  final String label;
-  const _InfoChip({required this.label});
+class _ResumeBullet extends StatelessWidget {
+  const _ResumeBullet({required this.text});
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        color: colorScheme.primary.withOpacity(0.08),
-        border: Border.all(color: colorScheme.primary.withOpacity(0.3)),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(
-          context,
-        ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            margin: const EdgeInsets.only(top: 7),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
+          ),
+        ],
       ),
     );
   }

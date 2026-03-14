@@ -3,7 +3,7 @@
 // ContactFormPage
 // - Reusable form widget used on the public Contact page.
 // - Collects name, email, subject (optional), and message.
-// - Sends messages to Supabase via ContactRepository (contact_messages table).
+// - Sends messages to the portfolio backend API via ContactRepository.
 // - Shows a Back button (maybePop) and a Send button with a loading state.
 
 import 'package:flutter/material.dart';
@@ -11,7 +11,14 @@ import 'package:flutter/material.dart';
 import '../../../data/api/contact_repository.dart';
 
 class ContactFormPage extends StatefulWidget {
-  const ContactFormPage({super.key});
+  const ContactFormPage({
+    super.key,
+    this.embedded = false,
+    this.showBackButton = true,
+  });
+
+  final bool embedded;
+  final bool showBackButton;
 
   @override
   State<ContactFormPage> createState() => _ContactFormPageState();
@@ -25,7 +32,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
   final _subjectCtrl = TextEditingController();
   final _messageCtrl = TextEditingController();
 
-  final _contactRepo = ContactRepository(); // 👈 talks to Supabase
+  final _contactRepo = ContactRepository();
 
   bool _submitting = false;
 
@@ -72,7 +79,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
           ? 'Subject: $subject\n\n$messageBody'
           : messageBody;
 
-      // 🔻 Save into Supabase via ContactRepository
+      // Save through the backend API via ContactRepository.
       await _contactRepo.submitContact(
         firstName: firstName,
         lastName: lastName,
@@ -109,118 +116,115 @@ class _ContactFormPageState extends State<ContactFormPage> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final form = Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Send a message', style: textTheme.titleLarge),
+          const SizedBox(height: 8),
+          Text(
+            'Use the form below to get in touch about roles, projects, or collaborations.',
+            style: textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+
+          TextFormField(
+            controller: _nameCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Your name',
+              prefixIcon: Icon(Icons.person_outline),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter your name';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+
+          TextFormField(
+            controller: _emailCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              prefixIcon: Icon(Icons.email_outlined),
+            ),
+            keyboardType: TextInputType.emailAddress,
+            validator: (value) {
+              final v = value?.trim() ?? '';
+              if (v.isEmpty) return 'Please enter your email';
+              if (!v.contains('@')) return 'Please enter a valid email';
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+
+          TextFormField(
+            controller: _subjectCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Subject (optional)',
+              prefixIcon: Icon(Icons.topic_outlined),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          TextFormField(
+            controller: _messageCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Message',
+              alignLabelWithHint: true,
+              prefixIcon: Icon(Icons.message_outlined),
+            ),
+            minLines: 4,
+            maxLines: 6,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter a message';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.spaceBetween,
+            children: [
+              if (widget.showBackButton)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).maybePop();
+                  },
+                  icon: const Icon(Icons.arrow_back, size: 18),
+                  label: const Text('Back'),
+                ),
+              FilledButton.icon(
+                onPressed: _submitting ? null : _submit,
+                icon: _submitting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send_rounded),
+                label: Text(_submitting ? 'Sending…' : 'Send message'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (widget.embedded) {
+      return form;
+    }
 
     return Card(
       elevation: 6,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Send a message', style: textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text(
-                'Use the form below to get in touch about roles, projects, or collaborations.',
-                style: textTheme.bodySmall,
-              ),
-              const SizedBox(height: 16),
-
-              // Name (will be split into firstName + lastName)
-              TextFormField(
-                controller: _nameCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Your name',
-                  prefixIcon: Icon(Icons.person_outline),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // Email
-              TextFormField(
-                controller: _emailCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  final v = value?.trim() ?? '';
-                  if (v.isEmpty) return 'Please enter your email';
-                  if (!v.contains('@')) return 'Please enter a valid email';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // Subject (optional)
-              TextFormField(
-                controller: _subjectCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Subject (optional)',
-                  prefixIcon: Icon(Icons.topic_outlined),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Message
-              TextFormField(
-                controller: _messageCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Message',
-                  alignLabelWithHint: true,
-                  prefixIcon: Icon(Icons.message_outlined),
-                ),
-                minLines: 4,
-                maxLines: 6,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a message';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-
-              // Actions row: Back + Send message
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      // Go back to the previous page if possible.
-                      // On web this will pop the last route if one exists.
-                      Navigator.of(context).maybePop();
-                    },
-                    icon: const Icon(Icons.arrow_back, size: 18),
-                    label: const Text('Back'),
-                  ),
-                  FilledButton.icon(
-                    onPressed: _submitting ? null : _submit,
-                    icon: _submitting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.send_rounded),
-                    label: Text(_submitting ? 'Sending…' : 'Send message'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+      child: Padding(padding: const EdgeInsets.all(20), child: form),
     );
   }
 }

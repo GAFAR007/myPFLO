@@ -16,14 +16,24 @@ class MenuButton extends StatelessWidget {
     // otherwise Scaffold.of(...) would fail.
     return Builder(
       builder: (ctx) {
-        return IconButton(
-          tooltip: 'Menu',
-          onPressed: () {
-            debugPrint('[MenuButton] Menu tapped');
-            Scaffold.of(ctx).openDrawer();
-          },
-          icon: const Icon(Icons.menu),
-          color: colorScheme.onSurface,
+        return Material(
+          color: colorScheme.primaryContainer.withValues(alpha: 0.42),
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () {
+              Scaffold.of(ctx).openDrawer();
+            },
+            child: SizedBox(
+              width: 56,
+              height: 56,
+              child: Icon(
+                Icons.menu_rounded,
+                color: colorScheme.onSurface,
+                size: 28,
+              ),
+            ),
+          ),
         );
       },
     );
