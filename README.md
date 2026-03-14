@@ -25,3 +25,4 @@ flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:3000
 - Dry run: `cd backend && npm run migrate:supabase -- --dry-run`
 - Import data: `cd backend && npm run migrate:supabase`
 - Seed/update the admin account: `cd backend && npm run seed:admin`
+- Seed manual portfolio projects: `cd backend && npm run seed:projects`

@@ -10,6 +10,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "seed:admin": "node src/scripts/seed_admin.js",
+    "seed:projects": "node src/scripts/seed_projects.js",
     "migrate:supabase": "node src/scripts/migrate_supabase.js",
     "test": "node --test"
   },
