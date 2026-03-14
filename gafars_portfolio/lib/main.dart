@@ -7,7 +7,6 @@
 import 'package:flutter/material.dart';
 import 'package:gafars_portfolio/features/profile/view/profile_page.dart';
 
-import 'data/supabase/supabase_client.dart';
 import 'features/auth/widgets/auth_gate.dart';
 import 'features/setup/view/setup_page.dart';
 import 'features/home/view/home_page.dart';
@@ -18,12 +17,7 @@ import 'features/resume/view/resume_page.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
-void main() {
-  // Fail early if env vars are missing
-  Supa.assertConfigured();
-
-  runApp(const MyApp());
-}
+void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

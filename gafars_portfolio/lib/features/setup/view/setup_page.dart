@@ -6,10 +6,11 @@
 
 import 'package:flutter/material.dart';
 
-// --- Data layer (Supabase repositories + models) ---
-import '../../../data/supabase/profile_repository.dart';
-import '../../../data/supabase/models/site_profile.dart';
-import '../../../data/supabase/supabase_client.dart';
+import '../../../data/api/auth_repository.dart';
+import '../../../data/api/models/site_profile.dart';
+import '../../../data/api/profile_repository.dart';
+import '../../../data/api/projects_repository.dart';
+import '../../home/widgets/app_avatar.dart';
 
 // --- Widgets (small reusable UI building blocks) ---
 import '../widgets/connection_banner.dart';
@@ -31,17 +32,15 @@ class SetupPage extends StatefulWidget {
 }
 
 class _SetupPageState extends State<SetupPage> {
-  /// Global key for the form – lets us call `validate()` etc.
   final _formKey = GlobalKey<FormState>();
-
-  /// Repository that talks to Supabase for the `site_profile` table.
   final _repo = ProfileRepository();
+  final _projectsRepository = ProjectsRepository();
+  final _authRepository = AuthRepository();
 
   // --------------------------------------------------
   // Controllers & state fields
   // --------------------------------------------------
 
-  // Supabase row id for site_profile (uuid in your DB)
   String? _profileId;
 
   // Name parts
@@ -67,14 +66,14 @@ class _SetupPageState extends State<SetupPage> {
   final _website = TextEditingController();
   final _location = TextEditingController();
   final _avatarUrl = TextEditingController();
-// ------------------------------------------
-// Projects (Dev only)
-// ------------------------------------------
-final _projectTitle = TextEditingController();
-final _projectSubtitle = TextEditingController();
-final _projectDescription = TextEditingController();
-final _projectUrl = TextEditingController();
-final _projectTags = TextEditingController(); // comma-separated
+  // ------------------------------------------
+  // Projects (Dev only)
+  // ------------------------------------------
+  final _projectTitle = TextEditingController();
+  final _projectSubtitle = TextEditingController();
+  final _projectDescription = TextEditingController();
+  final _projectUrl = TextEditingController();
+  final _projectTags = TextEditingController(); // comma-separated
 
   // Loading / saving + status message
   bool _loading = true; // page-level loading (health + prefill)
@@ -93,16 +92,11 @@ final _projectTags = TextEditingController(); // comma-separated
     _init();
   }
 
-  /// High-level init: check Supabase connection and prefill existing profile.
   Future<void> _init() async {
     await _checkConnection();
     await _prefill();
   }
 
-  /// Quick health check – pings Supabase using `fetchProfile`.
-  ///
-  /// This is mainly for developer feedback: if something is wrong with the
-  /// connection or RLS, we show it at the top of the screen.
   Future<void> _checkConnection() async {
     setState(() {
       _checkingConn = true;
@@ -117,7 +111,7 @@ final _projectTags = TextEditingController(); // comma-separated
       _healthOk = false;
       _healthErr = e.toString();
       // ignore: avoid_print
-      print('[SupaHealth] check failed: $e\n$st');
+      print('[ApiHealth] check failed: $e\n$st');
     } finally {
       if (mounted) {
         setState(() => _checkingConn = false);
@@ -125,17 +119,12 @@ final _projectTags = TextEditingController(); // comma-separated
     }
   }
 
-  /// Prefill the form if a profile already exists in Supabase.
-  ///
-  /// This lets you revisit the page later and edit, instead of always
-  /// starting from an empty form.
   Future<void> _prefill() async {
     try {
       final p = await _repo.fetchProfile();
       if (p != null) {
-        // Save the REAL Supabase id for this row (uuid)
         _profileId = p.id;
-        print('[SetupPrefill] Loaded site_profile row with id=$_profileId');
+        print('[SetupPrefill] Loaded profile with id=$_profileId');
 
         // Name parts
         _first.text = p.firstName ?? '';
@@ -157,9 +146,9 @@ final _projectTags = TextEditingController(); // comma-separated
         _twitter.text = p.twitter ?? '';
         _website.text = p.website ?? '';
         _location.text = p.location ?? '';
-        _avatarUrl.text = p.avatarUrl ?? ''; // prefill Avatar URL
+        _avatarUrl.text = p.avatarUrl ?? '';
       } else {
-        print('[SetupPrefill] No site_profile row yet – form is empty.');
+        print('[SetupPrefill] No profile document yet – form is empty.');
       }
     } catch (e, st) {
       // ignore: avoid_print
@@ -176,10 +165,7 @@ final _projectTags = TextEditingController(); // comma-separated
   String? _emptyToNull(String v) => v.trim().isEmpty ? null : v.trim();
 
   /// Build a SiteProfile from the current form controllers.
-  ///
-  /// Used by the big "Save profile (upsert)" button.
   SiteProfile _buildProfileFromForm() {
-    // Build full name from parts (no extra spaces between empties).
     final fullName = [
       _first.text.trim(),
       _middle.text.trim(),
@@ -187,9 +173,6 @@ final _projectTags = TextEditingController(); // comma-separated
     ].where((s) => s.isNotEmpty).join(' ');
 
     return SiteProfile(
-      // ✅ Use the REAL Supabase id if we have one.
-      // If this is the very first time, id may be null – toMap() does not
-      // include id, so Supabase will generate a new uuid.
       id: _profileId ?? '',
       fullName: fullName,
       title: _title.text.trim(),
@@ -209,6 +192,15 @@ final _projectTags = TextEditingController(); // comma-separated
       lastName: _emptyToNull(_last.text),
       dateOfBirth: _dob,
     );
+  }
+
+  String get _avatarPreviewName {
+    final fullName = [
+      _first.text.trim(),
+      _middle.text.trim(),
+      _last.text.trim(),
+    ].where((part) => part.isNotEmpty).join(' ');
+    return fullName;
   }
 
   @override
@@ -259,11 +251,10 @@ final _projectTags = TextEditingController(); // comma-separated
         () => _status = '✅ Saved! Profile is now ready for the public site.',
       );
     } catch (e, st) {
-      // ignore: avoid_print
       print('[SetupSave] upsert failed: $e\n$st');
       setState(
         () => _status =
-            '❌ Save failed. Check Supabase policies / connection and try again.',
+            '❌ Save failed. Check the backend connection and try again.',
       );
     } finally {
       setState(() => _saving = false);
@@ -275,7 +266,7 @@ final _projectTags = TextEditingController(); // comma-separated
     // ---------- DEBUG LOG #1 ----------
     print('--------------------------------------------------');
     print('[DEBUG] Update section pressed: "$label"');
-    print('[DEBUG] Fields being sent to Supabase:');
+    print('[DEBUG] Fields being sent to the backend:');
     fields.forEach((k, v) => print('   $k: $v'));
 
     setState(() {
@@ -287,7 +278,7 @@ final _projectTags = TextEditingController(); // comma-separated
       await _repo.updateFields(fields);
 
       // ---------- DEBUG LOG #2 ----------
-      print('[DEBUG] Supabase updateFields() completed successfully.');
+      print('[DEBUG] updateFields() completed successfully.');
       print('[DEBUG] Section "$label" updated with: $fields');
       print('--------------------------------------------------');
 
@@ -308,62 +299,50 @@ final _projectTags = TextEditingController(); // comma-separated
       setState(() => _saving = false);
     }
   }
-// ------------------------------------------
-// SAVE PROJECT (projects table)
-// ------------------------------------------
-Future<void> _saveProject() async {
-  final title = _projectTitle.text.trim();
 
-  if (title.isEmpty) {
-    setState(() => _status = '❌ Project title is required.');
-    return;
-  }
+  Future<void> _saveProject() async {
+    final title = _projectTitle.text.trim();
 
-  final tags = _projectTags.text
-      .split(',')
-      .map((t) => t.trim())
-      .where((t) => t.isNotEmpty)
-      .toList();
+    if (title.isEmpty) {
+      setState(() => _status = '❌ Project title is required.');
+      return;
+    }
 
-  setState(() {
-    _saving = true;
-    _status = null;
-  });
+    final tags = _projectTags.text
+        .split(',')
+        .map((tag) => tag.trim())
+        .where((tag) => tag.isNotEmpty)
+        .toList();
 
-  try {
-    debugPrint('[PROJECT] inserting project');
-    debugPrint('title=$title');
-    debugPrint('tags=$tags');
-
-    await Supa.client.from('projects').insert({
-      'title': title,
-      'subtitle': _emptyToNull(_projectSubtitle.text),
-      'description': _emptyToNull(_projectDescription.text),
-      'url': _emptyToNull(_projectUrl.text),
-      'tags': tags,
-      'is_active': true,
-      'sort_order': 0,
+    setState(() {
+      _saving = true;
+      _status = null;
     });
 
-    _projectTitle.clear();
-    _projectSubtitle.clear();
-    _projectDescription.clear();
-    _projectUrl.clear();
-    _projectTags.clear();
+    try {
+      await _projectsRepository.createProject(
+        title: title,
+        subtitle: _emptyToNull(_projectSubtitle.text),
+        description: _emptyToNull(_projectDescription.text),
+        url: _emptyToNull(_projectUrl.text),
+        tags: tags,
+      );
 
-    setState(() => _status = '✅ Project added.');
+      _projectTitle.clear();
+      _projectSubtitle.clear();
+      _projectDescription.clear();
+      _projectUrl.clear();
+      _projectTags.clear();
 
-    debugPrint('[PROJECT] insert success');
-  } catch (e, st) {
-    debugPrint('[PROJECT] insert failed');
-    debugPrint(e.toString());
-    debugPrint(st.toString());
-
-    setState(() => _status = '❌ Failed to add project.');
-  } finally {
-    setState(() => _saving = false);
+      setState(() => _status = '✅ Project added.');
+    } catch (e) {
+      setState(() => _status = '❌ Failed to add project: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -382,15 +361,11 @@ Future<void> _saveProject() async {
             icon: const Icon(Icons.logout),
             tooltip: 'Sign out',
             onPressed: () async {
-              // 1) Sign out from Supabase (clears the session)
-              await Supa.client.auth.signOut();
-
-              // 2) Navigate back to the public home page ('/')
+              await _authRepository.logout();
               if (!mounted) return;
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/', // route name for HomePage
-                (route) => false, // clear previous navigation stack
-              );
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/', (route) => false);
             },
           ),
         ],
@@ -419,7 +394,7 @@ Future<void> _saveProject() async {
                       const SizedBox(height: 12),
 
                       Text(
-                        'Seed your public profile (stored in site_profile).',
+                        'Seed your public profile through the Render API.',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -468,9 +443,10 @@ Future<void> _saveProject() async {
                                           'first_name': _first.text.trim(),
                                           'middle_name': _middle.text.trim(),
                                           'last_name': _last.text.trim(),
-                                          'date_of_birth': _dob?.toIso8601String()
-                                                    .split('T')
-                                                    .first,
+                                          'date_of_birth': _dob
+                                              ?.toIso8601String()
+                                              .split('T')
+                                              .first,
                                         }, 'Basic information'),
                                   icon: const Icon(
                                     Icons.save_outlined,
@@ -570,7 +546,7 @@ Future<void> _saveProject() async {
                                           'tagline': _emptyToNull(
                                             _tagline.text,
                                           ),
-                                          'about_md': _emptyToNull(
+                                          'aboutMd': _emptyToNull(
                                             _aboutMd.text,
                                           ),
                                         }, 'About & tagline'),
@@ -614,7 +590,7 @@ Future<void> _saveProject() async {
                                   onPressed: _saving
                                       ? null
                                       : () => _saveSection({
-                                          'phone_e164': _emptyToNull(
+                                          'phoneE164': _emptyToNull(
                                             _phoneE164.text,
                                           ),
                                           'website': _emptyToNull(
@@ -684,51 +660,49 @@ Future<void> _saveProject() async {
                               ),
 
                               const Divider(height: 24),
-const Divider(height: 24),
+                              // ------------------------------------------
+                              // PROJECTS (DEV ONLY)
+                              // ------------------------------------------
+                              Text(
+                                'Projects',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
 
-// ------------------------------------------
-// PROJECTS (DEV ONLY)
-// ------------------------------------------
-Text(
-  'Projects',
-  style: theme.textTheme.titleMedium?.copyWith(
-    fontWeight: FontWeight.w600,
-  ),
-),
-const SizedBox(height: 8),
+                              LabeledField(
+                                label: 'Project title',
+                                controller: _projectTitle,
+                              ),
+                              LabeledField(
+                                label: 'Subtitle',
+                                controller: _projectSubtitle,
+                              ),
+                              LabeledField(
+                                label: 'Description',
+                                controller: _projectDescription,
+                                maxLines: 4,
+                              ),
+                              LabeledField(
+                                label: 'Project URL',
+                                controller: _projectUrl,
+                                validator: urlValidator,
+                              ),
+                              LabeledField(
+                                label: 'Tags (comma separated)',
+                                controller: _projectTags,
+                                hint: 'flutter, mongodb, web',
+                              ),
 
-LabeledField(
-  label: 'Project title',
-  controller: _projectTitle,
-),
-LabeledField(
-  label: 'Subtitle',
-  controller: _projectSubtitle,
-),
-LabeledField(
-  label: 'Description',
-  controller: _projectDescription,
-  maxLines: 4,
-),
-LabeledField(
-  label: 'Project URL',
-  controller: _projectUrl,
-  validator: urlValidator,
-),
-LabeledField(
-  label: 'Tags (comma separated)',
-  controller: _projectTags,
-  hint: 'flutter, supabase, web',
-),
-
-Align(
-  alignment: Alignment.centerRight,
-  child: TextButton.icon(
-    onPressed: _saving ? null : _saveProject,
-    icon: const Icon(Icons.add, size: 16),
-    label: const Text('Add project'),
-  ),
-),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton.icon(
+                                  onPressed: _saving ? null : _saveProject,
+                                  icon: const Icon(Icons.add, size: 16),
+                                  label: const Text('Add project'),
+                                ),
+                              ),
 
                               // ------------------------------------------
                               // MEDIA (Avatar + CV)
@@ -741,11 +715,51 @@ Align(
                               ),
                               const SizedBox(height: 8),
 
-                              // Avatar uploader (writes URL into _avatarUrl)
+                              Row(
+                                children: [
+                                  AppAvatar(
+                                    avatarUrl: _emptyToNull(_avatarUrl.text),
+                                    fullName: _avatarPreviewName,
+                                    email: _emptyToNull(_email.text),
+                                    size: 88,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Text(
+                                      _emptyToNull(_avatarUrl.text) == null
+                                          ? 'No uploaded profile image yet. DiceBear adventurer is the active fallback.'
+                                          : 'Uploaded profile image is active. Removing it will switch back to DiceBear.',
+                                      style: theme.textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+
                               AvatarUploadField(controller: _avatarUrl),
                               const SizedBox(height: 12),
 
-                              // CV uploader (writes URL into _cvUrl)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: OutlinedButton.icon(
+                                  onPressed:
+                                      _saving || _avatarUrl.text.trim().isEmpty
+                                      ? null
+                                      : () async {
+                                          setState(() => _avatarUrl.clear());
+                                          await _saveSection({
+                                            'avatarUrl': null,
+                                          }, 'Profile image');
+                                        },
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    size: 16,
+                                  ),
+                                  label: const Text('Remove profile image'),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+
                               CvUploadField(controller: _cvUrl),
 
                               Align(
@@ -754,10 +768,10 @@ Align(
                                   onPressed: _saving
                                       ? null
                                       : () => _saveSection({
-                                          'avatar_url': _emptyToNull(
+                                          'avatarUrl': _emptyToNull(
                                             _avatarUrl.text,
                                           ),
-                                          'cv_url': _emptyToNull(_cvUrl.text),
+                                          'cvUrl': _emptyToNull(_cvUrl.text),
                                         }, 'Profile media'),
                                   icon: const Icon(
                                     Icons.save_outlined,
@@ -811,8 +825,8 @@ Align(
 
                       const Text(
                         'Dev note: This page is for admin use only. '
-                        'Public visitors will read from site_profile via the '
-                        'Home / About / Projects pages.',
+                        'Public visitors read profile and project data from the '
+                        'Render API backed by MongoDB.',
                         style: TextStyle(fontSize: 12, color: Colors.black54),
                       ),
                     ],

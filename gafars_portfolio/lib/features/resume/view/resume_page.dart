@@ -13,8 +13,8 @@ import 'package:web/web.dart' as web;
 import 'package:flutter/material.dart';
 
 import '../../shell/app_scaffold.dart';
-import '../../../data/supabase/profile_repository.dart';
-import '../../../data/supabase/models/site_profile.dart';
+import '../../../data/api/models/site_profile.dart';
+import '../../../data/api/profile_repository.dart';
 
 class ResumePage extends StatefulWidget {
   const ResumePage({super.key});
@@ -82,7 +82,6 @@ class _ResumePageState extends State<ResumePage> {
     }
 
     if (kIsWeb) {
-      // Supabase public URLs support ?download=FILENAME to trigger download.
       final downloadUrl = '$cvUrl?download=Gafar_Razak_CV.pdf';
       web.window.open(downloadUrl, '_blank');
     } else {
@@ -262,7 +261,7 @@ class _ResumePageState extends State<ResumePage> {
           ),
           const SizedBox(height: 4),
           Text(
-            'PDF • 1 file • Supabase storage',
+            'PDF • 1 file • Cloudinary storage',
             style: textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),

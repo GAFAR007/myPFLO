@@ -15,8 +15,8 @@ import 'package:flutter/material.dart';
 
 import '../../shell/app_scaffold.dart';
 import 'contact_form_page.dart';
-import '../../../data/supabase/profile_repository.dart';
-import '../../../data/supabase/models/site_profile.dart';
+import '../../../data/api/models/site_profile.dart';
+import '../../../data/api/profile_repository.dart';
 
 class ContactPage extends StatelessWidget {
   const ContactPage({super.key});
@@ -190,9 +190,10 @@ class ContactPage extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(24),
-                          color: colorScheme.surfaceContainerHighest.withOpacity(
-                            theme.brightness == Brightness.dark ? 0.9 : 1.0,
-                          ),
+                          color: colorScheme.surfaceContainerHighest
+                              .withOpacity(
+                                theme.brightness == Brightness.dark ? 0.9 : 1.0,
+                              ),
                         ),
                         padding: const EdgeInsets.all(16),
                         child: const ContactFormPage(),

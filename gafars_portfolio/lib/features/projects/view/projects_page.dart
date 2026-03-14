@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../data/api/models/project.dart';
+import '../../../data/api/projects_repository.dart';
 import '../../shell/app_scaffold.dart';
 
 class ProjectsPage extends StatelessWidget {
@@ -9,34 +11,7 @@ class ProjectsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-
-    /// TEMP STATIC DATA (matches what you showed)
-    final projects = <ProjectCardData>[
-      ProjectCardData(
-        title: 'Farm Research Platform',
-        subtitle: 'Flutter Web • Research',
-        description:
-            'A web-based research and data collection platform built with Flutter and Supabase.',
-        tags: const ['flutter', 'research', 'web'],
-        url: 'https://farmresearch.gafarstechnologies.com',
-      ),
-      ProjectCardData(
-        title: 'Gafars Technologies Portfolio',
-        subtitle: 'Flutter Web • Supabase',
-        description:
-            'Admin-managed portfolio system with Supabase backend and Flutter Web frontend.',
-        tags: const ['flutter', 'portfolio', 'supabase', 'web'],
-        url: 'https://gafarstechnologies.com',
-      ),
-    ];
-
-    /// 🔎 DEBUG: log projects once page builds
-    debugPrint('========== PROJECTS DEBUG ==========');
-    for (final p in projects) {
-      debugPrint('Project: ${p.title}');
-      debugPrint('URL: ${p.url}');
-    }
-    debugPrint('===================================');
+    final repository = ProjectsRepository();
 
     return AppScaffold(
       title: 'Projects • Gafars Technologies',
@@ -45,43 +20,66 @@ class ProjectsPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1000),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Selected Projects',
-                  style: textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'A few examples of how I combine business thinking with modern mobile and web development.',
-                  style: textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 24),
+            child: FutureBuilder<List<PortfolioProject>>(
+              future: repository.fetchProjects(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isWide = constraints.maxWidth > 800;
+                if (snapshot.hasError) {
+                  return Text(
+                    'Could not load projects right now.',
+                    style: textTheme.bodyMedium,
+                  );
+                }
 
-                    return Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children: projects.map((project) {
-                        final width = isWide
-                            ? (constraints.maxWidth - 16) / 2
-                            : constraints.maxWidth;
+                final projects = snapshot.data ?? const <PortfolioProject>[];
 
-                        return SizedBox(
-                          width: width,
-                          child: ProjectCard(data: project),
-                        );
-                      }).toList(),
-                    );
-                  },
-                ),
-              ],
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Selected Projects',
+                      style: textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'A few examples of how I combine business thinking with modern mobile and web development.',
+                      style: textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 24),
+                    if (projects.isEmpty)
+                      Text(
+                        'No projects have been published yet.',
+                        style: textTheme.bodyMedium,
+                      )
+                    else
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth > 800;
+
+                          return Wrap(
+                            spacing: 16,
+                            runSpacing: 16,
+                            children: projects.map((project) {
+                              final width = isWide
+                                  ? (constraints.maxWidth - 16) / 2
+                                  : constraints.maxWidth;
+
+                              return SizedBox(
+                                width: width,
+                                child: ProjectCard(project: project),
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -90,56 +88,26 @@ class ProjectsPage extends StatelessWidget {
   }
 }
 
-/// ---------------------------------------------------------------------------
-/// DATA MODEL
-/// ---------------------------------------------------------------------------
-class ProjectCardData {
-  final String title;
-  final String subtitle;
-  final String description;
-  final List<String> tags;
-  final String? url;
-
-  const ProjectCardData({
-    required this.title,
-    required this.subtitle,
-    required this.description,
-    required this.tags,
-    this.url,
-  });
-}
-
-/// ---------------------------------------------------------------------------
-/// PROJECT CARD (CLICKABLE + URL DISPLAY)
-/// ---------------------------------------------------------------------------
 class ProjectCard extends StatelessWidget {
-  final ProjectCardData data;
+  const ProjectCard({super.key, required this.project});
 
-  const ProjectCard({super.key, required this.data});
+  final PortfolioProject project;
 
   Future<void> _openUrl(BuildContext context) async {
-    if (data.url == null || data.url!.isEmpty) {
-      debugPrint('[PROJECT CLICK] No URL for ${data.title}');
+    final rawUrl = project.url?.trim() ?? '';
+    if (rawUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No project link available')),
       );
       return;
     }
 
-    final uri = Uri.parse(data.url!);
-
-    debugPrint('[PROJECT CLICK]');
-    debugPrint('Title: ${data.title}');
-    debugPrint('Opening URL: $uri');
-
-    if (!await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    )) {
-      debugPrint('[ERROR] Failed to open $uri');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open link')),
-      );
+    final uri = Uri.parse(rawUrl);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not open link')));
     }
   }
 
@@ -153,69 +121,64 @@ class ProjectCard extends StatelessWidget {
       onTap: () => _openUrl(context),
       child: Card(
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// TITLE
               Text(
-                data.title,
+                project.title,
                 style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 4),
-
-              /// SUBTITLE
-              Text(
-                data.subtitle,
-                style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.primary,
+              if ((project.subtitle ?? '').isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  project.subtitle!,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.primary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-
-              /// DESCRIPTION
-              Text(data.description, style: textTheme.bodyMedium),
-              const SizedBox(height: 12),
-
-              /// TAGS
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: data.tags
-                    .map(
-                      (tag) => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(999),
-                          color: colorScheme.primary.withOpacity(0.08),
-                        ),
-                        child: Text(
-                          tag,
-                          style: textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w500,
+              ],
+              if ((project.description ?? '').isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(project.description!, style: textTheme.bodyMedium),
+              ],
+              if (project.tags.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: project.tags
+                      .map(
+                        (tag) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            color: colorScheme.primary.withValues(alpha: 0.08),
+                          ),
+                          child: Text(
+                            tag,
+                            style: textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                    )
-                    .toList(),
-              ),
-
-              /// URL DISPLAY
-              if (data.url != null && data.url!.isNotEmpty) ...[
+                      )
+                      .toList(),
+                ),
+              ],
+              if ((project.url ?? '').isNotEmpty) ...[
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () => _openUrl(context),
                   child: Text(
-                    data.url!,
+                    project.url!,
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.primary,
                       decoration: TextDecoration.underline,

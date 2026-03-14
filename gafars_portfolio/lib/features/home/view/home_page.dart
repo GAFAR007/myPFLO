@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 
 import '../../shell/app_scaffold.dart';
 
-import '../../../data/supabase/profile_repository.dart';
-import '../../../data/supabase/models/site_profile.dart';
+import '../../../data/api/models/site_profile.dart';
+import '../../../data/api/profile_repository.dart';
 import '../widgets/displayavarter.dart';
 
 class HomePage extends StatelessWidget {
@@ -33,7 +33,7 @@ class HomePage extends StatelessWidget {
           if (snapshot.hasError) {
             return Center(
               child: Text(
-                'Error loading profile – please check Supabase / network.',
+                'Error loading profile – please check the backend / network.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.redAccent),
               ),
@@ -44,9 +44,7 @@ class HomePage extends StatelessWidget {
 
           // ⚠️ No profile row at all
           if (profile == null) {
-            return const Center(
-              child: Text('No profile found in site_profile table.'),
-            );
+            return const Center(child: Text('No profile found yet.'));
           }
 
           // ⭐ Helper: safely get trimmed value or fallback
@@ -69,7 +67,7 @@ class HomePage extends StatelessWidget {
           // 🔧 Updated so it’s not just Flutter/Supabase
           final title = valueOr(
             profile.title,
-            'Mobile & Web Engineer | Flutter · Supabase · Node.js · UI/UX',
+            'Mobile & Web Engineer | Flutter · MongoDB · Node.js · UI/UX',
           );
 
           final tagline = valueOr(
@@ -133,7 +131,10 @@ class HomePage extends StatelessWidget {
                           ? Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const DisplayAvatar(),
+                                DisplayAvatar(
+                                  fullName: displayName,
+                                  email: profile.email,
+                                ),
                                 const SizedBox(height: 24),
                                 _HeroTextBlock(
                                   displayName: displayName,
@@ -161,11 +162,14 @@ class HomePage extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 48),
-                                const Expanded(
+                                Expanded(
                                   flex: 2,
                                   child: Align(
                                     alignment: Alignment.center,
-                                    child: DisplayAvatar(),
+                                    child: DisplayAvatar(
+                                      fullName: displayName,
+                                      email: profile.email,
+                                    ),
                                   ),
                                 ),
                               ],

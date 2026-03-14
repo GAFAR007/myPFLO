@@ -2,7 +2,7 @@
 //
 // ConnectionBanner
 // - Small status bar that shows:
-//   • "Checking…" (blue) while probing Supabase
+//   • "Checking…" (blue) while probing the backend
 //   • "Connected" (green) if OK
 //   • "Can’t reach…" (red) plus a Retry button and a tiny dev hint
 //
@@ -32,13 +32,13 @@ class ConnectionBanner extends StatelessWidget {
 
     if (checking) {
       bg = Colors.blue.shade50;
-      msg = 'Checking Supabase connection…';
+      msg = 'Checking backend connection…';
     } else if (ok) {
       bg = Colors.green.shade50;
-      msg = 'Connected to Supabase';
+      msg = 'Connected to the Render API';
     } else {
       bg = Colors.red.shade50;
-      msg = 'Can’t reach Supabase. Please check your internet or try again.';
+      msg = 'Can’t reach the backend. Please check your internet or try again.';
     }
 
     return Container(

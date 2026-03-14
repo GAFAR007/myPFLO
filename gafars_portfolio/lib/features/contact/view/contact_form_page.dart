@@ -8,7 +8,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../data/supabase/contact_repository.dart';
+import '../../../data/api/contact_repository.dart';
 
 class ContactFormPage extends StatefulWidget {
   const ContactFormPage({super.key});
@@ -78,6 +78,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
         lastName: lastName,
         email: email,
         message: fullMessage,
+        subject: subject.isNotEmpty ? subject : null,
       );
 
       if (!mounted) return;

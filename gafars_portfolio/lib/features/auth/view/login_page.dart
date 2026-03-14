@@ -1,12 +1,10 @@
 // lib/features/auth/view/login_page.dart
 //
-// Simple admin login form using Supabase Auth.
-// Only your admin account (razakgafar98@outlook.com) should use this.
+// Simple admin login form backed by the Render API.
 
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../data/supabase/supabase_client.dart';
+import '../../../data/api/auth_repository.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,8 +15,8 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
+  final _authRepository = AuthRepository();
 
-  // Pre-fill your admin email to save typing.
   final _email = TextEditingController(text: 'razakgafar98@outlook.com');
   final _password = TextEditingController();
 
@@ -32,7 +30,6 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  /// Try to sign in with Supabase Auth.
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -42,33 +39,15 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final res = await Supa.client.auth.signInWithPassword(
-        email: _email.text.trim(),
-        password: _password.text,
-      );
+      await _authRepository.login(email: _email.text, password: _password.text);
 
-      // If login worked, Supabase returns a session.
-      if (res.session == null) {
-        setState(() {
-          _error = 'Login failed. No session returned.';
-        });
-        return;
-      }
-
-      // AuthGate is listening to auth changes and will automatically
-      // switch from LoginPage -> SetupPage when this succeeds.
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('✅ Logged in successfully')));
-    } on AuthException catch (e) {
-      setState(() {
-        _error = e.message;
-      });
+      Navigator.of(context).pushReplacementNamed('/admin');
     } catch (e) {
-      setState(() {
-        _error = 'Unexpected error: $e';
-      });
+      setState(() => _error = e.toString());
     } finally {
       if (mounted) {
         setState(() {

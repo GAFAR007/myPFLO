@@ -7,8 +7,8 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../data/supabase/profile_repository.dart';
-import '../../../data/supabase/models/site_profile.dart';
+import '../../../data/api/models/site_profile.dart';
+import '../../../data/api/profile_repository.dart';
 import '../../home/widgets/app_avatar.dart';
 
 class HomeDrawer extends StatelessWidget {
@@ -72,13 +72,21 @@ class HomeDrawer extends StatelessWidget {
                     final lastName = valueOr(profile.lastName, 'Gafar');
                     final fullName = '$firstName $lastName';
                     final avatarUrl = profile.avatarUrl?.trim() ?? '';
+                    final profileFullName = profile.fullName.trim().isNotEmpty
+                        ? profile.fullName.trim()
+                        : fullName;
 
                     debugPrint('[HomeDrawer] name     : $fullName');
                     debugPrint('[HomeDrawer] avatarUrl: $avatarUrl');
 
                     return Row(
                       children: [
-                        AppAvatar(avatarUrl: avatarUrl, size: 56),
+                        AppAvatar(
+                          avatarUrl: avatarUrl,
+                          fullName: profileFullName,
+                          email: profile.email,
+                          size: 56,
+                        ),
 
                         const SizedBox(width: 12),
                         Expanded(

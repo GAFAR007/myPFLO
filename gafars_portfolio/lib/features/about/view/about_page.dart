@@ -17,8 +17,8 @@
 import 'package:flutter/material.dart';
 
 import '../../shell/app_scaffold.dart';
-import '../../../data/supabase/profile_repository.dart';
-import '../../../data/supabase/models/site_profile.dart';
+import '../../../data/api/models/site_profile.dart';
+import '../../../data/api/profile_repository.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});

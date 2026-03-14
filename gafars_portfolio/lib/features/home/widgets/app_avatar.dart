@@ -1,65 +1,68 @@
-// lib/shared/widgets/app_avatar.dart
-//
 // Reusable avatar widget used across the app.
-// - Accepts an avatarUrl and size.
-// - If URL empty  → fallback icon.
-// - On WEB       → <img> via HtmlElementView.
-// - On others    → CircleAvatar with NetworkImage.
+// - Uses the uploaded profile image when present.
+// - Falls back to DiceBear's adventurer avatar when no profile image exists.
+// - Falls back to a generic person icon only if both network paths fail.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:web/web.dart' as web;
+
+import 'avatar_presets.dart';
 
 class AppAvatar extends StatelessWidget {
-  const AppAvatar({super.key, required this.avatarUrl, this.size = 120});
+  const AppAvatar({
+    super.key,
+    required this.avatarUrl,
+    this.fullName,
+    this.email,
+    this.seed,
+    this.size = 120,
+  });
 
   final String? avatarUrl;
+  final String? fullName;
+  final String? email;
+  final String? seed;
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    final clean = avatarUrl?.trim() ?? '';
+    final uploadedUrl = avatarUrl?.trim() ?? '';
+    final displayUrl = uploadedUrl.isNotEmpty
+        ? uploadedUrl
+        : AvatarPresets.buildDiceBearUrl(
+            fullName: fullName,
+            email: email,
+            seed: seed,
+          );
 
-    // 1) No URL → fallback
-    if (clean.isEmpty) {
-      debugPrint('[AppAvatar] empty URL – using fallback icon');
-      return CircleAvatar(
-        radius: size / 2,
-        backgroundColor: Colors.white10,
-        child: Icon(Icons.person, color: Colors.white70, size: size * 0.5),
-      );
-    }
-
-    // 2) WEB → real <img>
-    if (kIsWeb) {
-      debugPrint('[AppAvatar] Using HtmlElementView <img> for avatar.');
-      return ClipOval(
-        child: SizedBox(
-          width: size,
-          height: size,
-          child: HtmlElementView.fromTagName(
-            tagName: 'img',
-            onElementCreated: (element) {
-              final img = element as web.HTMLImageElement;
-              img.src = clean;
-              img.alt = 'Profile avatar';
-              img.style.objectFit = 'cover';
-              img.style.width = '${size}px';
-              img.style.height = '${size}px';
-            },
-          ),
+    return ClipOval(
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Image.network(
+          displayUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _FallbackAvatar(size: size),
         ),
-      );
-    }
+      ),
+    );
+  }
+}
 
-    // 3) Mobile / desktop → normal NetworkImage
+class _FallbackAvatar extends StatelessWidget {
+  const _FallbackAvatar({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
     return CircleAvatar(
       radius: size / 2,
-      backgroundColor: Colors.white10,
-      backgroundImage: NetworkImage(clean),
-      onBackgroundImageError: (_, __) {
-        debugPrint('[AppAvatar] ❌ NetworkImage error for $clean');
-      },
+      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+      child: Icon(
+        Icons.person,
+        color: Theme.of(context).colorScheme.onPrimaryContainer,
+        size: size * 0.45,
+      ),
     );
   }
 }

@@ -15,8 +15,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:web/web.dart' as web;
 import 'package:flutter/material.dart';
 
-import '../../../data/supabase/profile_repository.dart';
-import '../../../data/supabase/models/site_profile.dart';
+import '../../../data/api/models/site_profile.dart';
+import '../../../data/api/profile_repository.dart';
+import '../../home/widgets/app_avatar.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -79,7 +80,12 @@ class ProfilePage extends StatelessWidget {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              _ProfileAvatar(avatarUrl: profile.avatarUrl),
+                              AppAvatar(
+                                avatarUrl: profile.avatarUrl,
+                                fullName: _buildFullName(profile),
+                                email: profile.email,
+                                size: 64,
+                              ),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: _ProfileHeaderText(profile: profile),
@@ -211,38 +217,6 @@ class ProfilePage extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // Header bits
 // ─────────────────────────────────────────────────────────────────────────────
-
-/// Small avatar widget that gracefully handles missing avatarUrl.
-class _ProfileAvatar extends StatelessWidget {
-  final String? avatarUrl;
-
-  const _ProfileAvatar({required this.avatarUrl});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    if (avatarUrl == null || avatarUrl!.trim().isEmpty) {
-      return CircleAvatar(
-        radius: 32,
-        backgroundColor: colorScheme.primaryContainer,
-        child: Icon(
-          Icons.person,
-          size: 32,
-          color: colorScheme.onPrimaryContainer,
-        ),
-      );
-    }
-
-    return CircleAvatar(
-      radius: 32,
-      backgroundColor: colorScheme.surfaceContainerHighest,
-      foregroundImage: NetworkImage(avatarUrl!.trim()),
-      child: Icon(Icons.person, size: 32, color: colorScheme.onSurfaceVariant),
-    );
-  }
-}
 
 /// Name + tagline / title at the top of the card.
 class _ProfileHeaderText extends StatelessWidget {

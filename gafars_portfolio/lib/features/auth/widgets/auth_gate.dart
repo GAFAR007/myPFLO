@@ -1,16 +1,13 @@
 // lib/features/auth/widgets/auth_gate.dart
 //
-// Wrapper that decides what to show based on Supabase auth state:
+// Wrapper that decides what to show based on backend auth state:
 //
 // - If NOT logged in  -> show LoginPage (admin login)
 // - If logged in      -> show the protected child (e.g. SetupPage)
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../data/supabase/supabase_client.dart';
+import '../../../data/api/auth_repository.dart';
 import '../view/login_page.dart';
 
 class AuthGate extends StatefulWidget {
@@ -24,45 +21,46 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  Session? _session;
+  final _authRepository = AuthRepository();
+  AdminSession? _session;
   bool _loading = true;
-  StreamSubscription<AuthState>? _sub;
 
   @override
   void initState() {
     super.initState();
-
-    // 1) Get existing session (if already logged in)
-    _session = Supa.client.auth.currentSession;
-    _loading = false;
-
-    // 2) Listen for login / logout changes
-    _sub = Supa.client.auth.onAuthStateChange.listen((event) {
-      setState(() {
-        _session = event.session;
-      });
-    });
+    _loadSession();
   }
 
   @override
-  void dispose() {
-    _sub?.cancel();
-    super.dispose();
+  void didUpdateWidget(covariant AuthGate oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_loading && _session == null) {
+      _loadSession();
+    }
+  }
+
+  Future<void> _loadSession() async {
+    setState(() => _loading = true);
+
+    try {
+      _session = await _authRepository.fetchCurrentAdmin();
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Show spinner while we check the session the first time.
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // No session -> show LoginPage.
     if (_session == null) {
       return const LoginPage();
     }
 
-    // Session exists -> show the protected child (SetupPage).
     return widget.child;
   }
 }

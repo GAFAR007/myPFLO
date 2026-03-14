@@ -1,30 +1,32 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:gafars_portfolio/app.dart';
+import 'package:gafars_portfolio/features/auth/view/login_page.dart';
+import 'package:gafars_portfolio/features/home/widgets/avatar_presets.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const App());
+  test(
+    'DiceBear adventurer URL uses api.dicebear.com and the adventurer style',
+    () {
+      final url = AvatarPresets.buildDiceBearUrl(
+        fullName: 'Razak Gafar',
+        email: 'razak@example.com',
+      );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      expect(url, contains('https://api.dicebear.com'));
+      expect(url, contains('/adventurer/svg'));
+      expect(url, contains('Razak%20Gafar'));
+    },
+  );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('Login page renders admin sign-in form', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: LoginPage()));
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Admin Login'), findsOneWidget);
+    expect(find.text('Sign in to manage your portfolio'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Password'), findsOneWidget);
   });
 }

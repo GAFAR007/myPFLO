@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../data/supabase/storage_repository.dart';
+import '../../../data/api/storage_repository.dart';
 import 'file_upload_field.dart';
 
 class AvatarUploadField extends StatelessWidget {
@@ -20,9 +20,8 @@ class AvatarUploadField extends StatelessWidget {
       controller: controller,
       label: 'Avatar URL',
       hint: 'Click "Upload" to choose an image',
-      buttonText: 'Upload avatar',
+      buttonText: 'Upload profile image',
       allowedExtensions: const ['png', 'jpg', 'jpeg', 'webp'],
-      // Just plug StorageRepository into the generic upload function
       onUpload: (bytes, fileName) =>
           storage.uploadAvatar(bytes: bytes, fileName: fileName),
     );

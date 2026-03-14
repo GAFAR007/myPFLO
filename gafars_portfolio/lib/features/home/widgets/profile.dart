@@ -9,8 +9,8 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../data/supabase/profile_repository.dart';
-import '../../../data/supabase/models/site_profile.dart';
+import '../../../data/api/models/site_profile.dart';
+import '../../../data/api/profile_repository.dart';
 
 class ProfileWidget extends StatelessWidget {
   const ProfileWidget({super.key});
@@ -43,11 +43,8 @@ class ProfileWidget extends StatelessWidget {
         final profile = snapshot.data;
 
         if (profile == null) {
-          // ignore: avoid_print
           print('[ProfileWidget] ⚠️ No profile row found.');
-          return const Center(
-            child: Text('No profile row found in site_profile table.'),
-          );
+          return const Center(child: Text('No profile document found.'));
         }
 
         // Optional log of the full object

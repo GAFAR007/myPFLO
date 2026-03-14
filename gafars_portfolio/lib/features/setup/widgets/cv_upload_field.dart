@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../data/supabase/storage_repository.dart';
+import '../../../data/api/storage_repository.dart';
 import 'file_upload_field.dart';
 
 class CvUploadField extends StatelessWidget {

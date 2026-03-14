@@ -1,0 +1,11 @@
+.DS_Store
+.env
+.env.*
+node_modules/
+backend/node_modules/
+backend/.env
+backend/.env.*
+gafars_portfolio/.dart_tool/
+gafars_portfolio/build/
+gafars_portfolio/.flutter-plugins-dependencies
+gafars_portfolio/flutter_01.log

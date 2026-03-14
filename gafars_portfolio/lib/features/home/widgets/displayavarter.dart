@@ -5,35 +5,34 @@
 // PURPOSE
 // -------
 // This widget:
-// 1) Fetches your SiteProfile from Supabase ONCE when the widget is created.
+// 1) Fetches your SiteProfile once when the widget is created.
 // 2) Logs ONLY the profile `id` and `avatarUrl` to the console (so you can debug).
 // 3) Uses the shared AppAvatar widget to actually render the avatar image.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:gafars_portfolio/features/home/widgets/app_avatar.dart'; // 👈 NEW shared avatar
+import 'package:gafars_portfolio/features/home/widgets/app_avatar.dart';
 
-import '../../../data/supabase/profile_repository.dart';
-import '../../../data/supabase/models/site_profile.dart';
+import '../../../data/api/models/site_profile.dart';
+import '../../../data/api/profile_repository.dart';
 
 class DisplayAvatar extends StatefulWidget {
-  const DisplayAvatar({super.key});
+  const DisplayAvatar({super.key, this.fullName, this.email});
+
+  final String? fullName;
+  final String? email;
 
   @override
   State<DisplayAvatar> createState() => _DisplayAvatarState();
 }
 
 class _DisplayAvatarState extends State<DisplayAvatar> {
-  // Repository instance used to fetch profile data from Supabase.
   final _repo = ProfileRepository();
 
-  // The URL of the avatar image, as stored in Supabase.
+  String? _fullName;
+  String? _email;
   String? _avatarUrl;
-
-  // Whether we are currently waiting for Supabase response.
   bool _loading = true;
-
-  // If something goes wrong (no row, network error, etc.), we store a message here.
   String? _error;
 
   @override
@@ -42,7 +41,6 @@ class _DisplayAvatarState extends State<DisplayAvatar> {
     _loadAndLogAvatar();
   }
 
-  /// Fetch profile from Supabase once and log the two fields we care about.
   Future<void> _loadAndLogAvatar() async {
     try {
       final SiteProfile? profile = await _repo.fetchProfile();
@@ -63,6 +61,13 @@ class _DisplayAvatarState extends State<DisplayAvatar> {
       debugPrint('avatarUrl : $avatarUrl');
 
       setState(() {
+        _fullName = profile.fullName.trim().isNotEmpty
+            ? profile.fullName.trim()
+            : [profile.firstName?.trim(), profile.lastName?.trim()]
+                  .whereType<String>()
+                  .where((value) => value.isNotEmpty)
+                  .join(' ');
+        _email = profile.email;
         _avatarUrl = avatarUrl;
         _loading = false;
       });
@@ -94,7 +99,6 @@ class _DisplayAvatarState extends State<DisplayAvatar> {
       );
     }
 
-    // 3) SUCCESS STATE – delegate actual drawing to AppAvatar
     return Center(
       child: Card(
         margin: const EdgeInsets.all(16),
@@ -105,7 +109,9 @@ class _DisplayAvatarState extends State<DisplayAvatar> {
             children: [
               AppAvatar(
                 avatarUrl: _avatarUrl,
-                size: 120, // big hero avatar
+                fullName: _fullName ?? widget.fullName,
+                email: _email ?? widget.email,
+                size: 120,
               ),
             ],
           ),
