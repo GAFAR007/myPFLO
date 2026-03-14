@@ -4,6 +4,28 @@ const Project = require("../models/project");
 
 const manualProjects = [
   {
+    title: "Gafars Technologies Portfolio",
+    subtitle: "Flutter Web • MongoDB • Netlify",
+    description:
+      "Admin-managed portfolio platform with a Render-hosted MongoDB API, Cloudinary uploads, and a Netlify-hosted Flutter web frontend.",
+    url: "https://gafarstechnologies.com",
+    tags: ["flutter", "portfolio", "mongodb", "render", "netlify", "web"],
+    isActive: true,
+    sortOrder: 0,
+  },
+  {
+    legacySupabaseId: "manual-focus-mission",
+    title: "Focus Mission",
+    subtitle: "Flutter Web • MongoDB • Learning Platform",
+    description:
+      "A role-based learning platform with student, teacher, and mentor workspaces, mission-driven progress flows, analytics, and a Render-hosted MongoDB backend.",
+    url: null,
+    tags: ["flutter", "mongodb", "render", "education", "analytics"],
+    isActive: true,
+    sortOrder: 1,
+  },
+  {
+    legacySupabaseId: "manual-flexible-learning",
     title: "Flexible Learning",
     subtitle: "Flutter Web • E-Learning",
     description:
@@ -11,19 +33,20 @@ const manualProjects = [
     url: "https://flexiblelearning.gafarstechnologies.com/",
     tags: ["flutter", "education", "web"],
     isActive: true,
-    sortOrder: 1,
+    sortOrder: 3,
   },
 ];
 
 async function upsertProject(project) {
-  if (!project.url) {
-    throw new Error(`Project "${project.title}" is missing a URL.`);
-  }
+  const query = project.url ? { url: project.url } : { title: project.title };
 
   return Project.findOneAndUpdate(
-    { url: project.url },
+    query,
     {
       $set: {
+        ...(project.legacySupabaseId
+            ? { legacySupabaseId: project.legacySupabaseId }
+            : {}),
         title: project.title,
         subtitle: project.subtitle,
         description: project.description,
