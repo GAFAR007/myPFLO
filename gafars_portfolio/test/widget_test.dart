@@ -14,10 +14,21 @@ void main() {
       );
 
       expect(url, contains('https://api.dicebear.com'));
-      expect(url, contains('/adventurer/svg'));
+      expect(url, contains('/adventurer/png'));
       expect(url, contains('Razak%20Gafar'));
     },
   );
+
+  test('DiceBear avatar options generate multiple adventurer choices', () {
+    final options = AvatarPresets.buildDiceBearOptions(
+      fullName: 'Razak Gafar',
+      email: 'razak@example.com',
+    );
+
+    expect(options, hasLength(6));
+    expect(options.first.url, contains('/adventurer/png'));
+    expect(options.map((option) => option.seed).toSet(), hasLength(6));
+  });
 
   testWidgets('Login page renders admin sign-in form', (
     WidgetTester tester,

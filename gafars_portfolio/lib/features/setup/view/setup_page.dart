@@ -11,6 +11,7 @@ import '../../../data/api/models/site_profile.dart';
 import '../../../data/api/profile_repository.dart';
 import '../../../data/api/projects_repository.dart';
 import '../../home/widgets/app_avatar.dart';
+import '../../home/widgets/avatar_presets.dart';
 
 // --- Widgets (small reusable UI building blocks) ---
 import '../widgets/connection_banner.dart';
@@ -88,8 +89,16 @@ class _SetupPageState extends State<SetupPage> {
   @override
   void initState() {
     super.initState();
+    for (final controller in [_first, _middle, _last, _email, _avatarUrl]) {
+      controller.addListener(_refreshAvatarUi);
+    }
     // When the widget mounts, run a health check and prefill the form.
     _init();
+  }
+
+  void _refreshAvatarUi() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   Future<void> _init() async {
@@ -203,9 +212,35 @@ class _SetupPageState extends State<SetupPage> {
     return fullName;
   }
 
+  List<AvatarPresetOption> get _diceBearOptions =>
+      AvatarPresets.buildDiceBearOptions(
+        fullName: _avatarPreviewName,
+        email: _emptyToNull(_email.text),
+      );
+
+  bool get _hasAvatarSelection => _avatarUrl.text.trim().isNotEmpty;
+
+  bool get _hasDiceBearSelection =>
+      AvatarPresets.isDiceBearUrl(_avatarUrl.text);
+
+  String get _avatarStatusText {
+    if (!_hasAvatarSelection) {
+      return 'No uploaded profile image yet. The default DiceBear adventurer fallback is active.';
+    }
+
+    if (_hasDiceBearSelection) {
+      return 'A DiceBear adventurer avatar is selected. Uploading a profile image will override it.';
+    }
+
+    return 'Uploaded profile image is active. Removing it will switch back to DiceBear.';
+  }
+
   @override
   void dispose() {
     // Dispose all controllers to avoid memory leaks.
+    for (final controller in [_first, _middle, _last, _email, _avatarUrl]) {
+      controller.removeListener(_refreshAvatarUi);
+    }
     for (final c in [
       _first,
       _middle,
@@ -726,15 +761,64 @@ class _SetupPageState extends State<SetupPage> {
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Text(
-                                      _emptyToNull(_avatarUrl.text) == null
-                                          ? 'No uploaded profile image yet. DiceBear adventurer is the active fallback.'
-                                          : 'Uploaded profile image is active. Removing it will switch back to DiceBear.',
+                                      _avatarStatusText,
                                       style: theme.textTheme.bodyMedium,
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 12),
+
+                              Text(
+                                'Pick a DiceBear avatar',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'These avatars come from the DiceBear adventurer API. Select one below, or leave the field empty to use the automatic fallback.',
+                                style: theme.textTheme.bodySmall,
+                              ),
+                              const SizedBox(height: 12),
+
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: _diceBearOptions.map((option) {
+                                  final selected =
+                                      _avatarUrl.text.trim() == option.url;
+
+                                  return _AvatarChoiceChip(
+                                    option: option,
+                                    selected: selected,
+                                    onTap: _saving
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              _avatarUrl.text = option.url;
+                                            });
+                                          },
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 12),
+
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: TextButton.icon(
+                                  onPressed: _saving
+                                      ? null
+                                      : () {
+                                          setState(() => _avatarUrl.clear());
+                                        },
+                                  icon: const Icon(Icons.auto_awesome_outlined),
+                                  label: const Text(
+                                    'Use automatic DiceBear fallback',
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
 
                               AvatarUploadField(controller: _avatarUrl),
                               const SizedBox(height: 12),
@@ -755,7 +839,11 @@ class _SetupPageState extends State<SetupPage> {
                                     Icons.delete_outline,
                                     size: 16,
                                   ),
-                                  label: const Text('Remove profile image'),
+                                  label: Text(
+                                    _hasDiceBearSelection
+                                        ? 'Clear selected avatar'
+                                        : 'Remove profile image',
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 12),
@@ -843,6 +931,66 @@ class _SetupPageState extends State<SetupPage> {
               alignment: Alignment.center,
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _AvatarChoiceChip extends StatelessWidget {
+  const _AvatarChoiceChip({
+    required this.option,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final AvatarPresetOption option;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: 108,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: selected
+              ? colorScheme.primaryContainer.withValues(alpha: 0.68)
+              : colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? colorScheme.primary : colorScheme.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppAvatar(avatarUrl: option.url, size: 64),
+            const SizedBox(height: 8),
+            Text(
+              option.label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Icon(
+              selected ? Icons.check_circle : Icons.radio_button_unchecked,
+              size: 18,
+              color: selected
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ),
       ),
     );
   }
