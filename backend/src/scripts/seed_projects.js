@@ -19,26 +19,19 @@ const manualProjects = [
     subtitle: "Flutter Web • MongoDB • Learning Platform",
     description:
       "A role-based learning platform with student, teacher, and mentor workspaces, mission-driven progress flows, analytics, and a Render-hosted MongoDB backend.",
-    url: null,
+    url: "https://flexiblelearning.gafarstechnologies.com/",
     tags: ["flutter", "mongodb", "render", "education", "analytics"],
     isActive: true,
     sortOrder: 1,
   },
-  {
-    legacySupabaseId: "manual-flexible-learning",
-    title: "Flexible Learning",
-    subtitle: "Flutter Web • E-Learning",
-    description:
-      "A web-based learning platform built to support flexible digital education experiences.",
-    url: "https://flexiblelearning.gafarstechnologies.com/",
-    tags: ["flutter", "education", "web"],
-    isActive: true,
-    sortOrder: 3,
-  },
 ];
 
 async function upsertProject(project) {
-  const query = project.url ? { url: project.url } : { title: project.title };
+  const query = project.legacySupabaseId
+    ? { legacySupabaseId: project.legacySupabaseId }
+    : project.url
+      ? { url: project.url }
+      : { title: project.title };
 
   return Project.findOneAndUpdate(
     query,
@@ -69,6 +62,15 @@ async function run() {
   requireEnv("MONGODB_URI");
 
   await connectToDatabase();
+  await Project.deleteMany({
+    $or: [
+      { legacySupabaseId: "manual-flexible-learning" },
+      {
+        title: "Flexible Learning",
+        url: "https://flexiblelearning.gafarstechnologies.com/",
+      },
+    ],
+  });
   const seededProjects = [];
 
   for (const project of manualProjects) {
