@@ -1,188 +1,203 @@
-// lib/features/home/widgets/home_drawer.dart
-//
-// Simple Lyft-style side drawer.
-// - Fetches SiteProfile from Supabase (only firstName, lastName, avatarUrl).
-// - Shows your real avatar + name in the header.
-// - Below that: a list of nav items that navigate with named routes.
-
 import 'package:flutter/material.dart';
 
 import '../../../data/api/models/site_profile.dart';
 import '../../../data/api/profile_repository.dart';
-import '../../home/widgets/app_avatar.dart';
+import 'app_avatar.dart';
 
 class HomeDrawer extends StatelessWidget {
   const HomeDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final repo = ProfileRepository();
 
     return Drawer(
       child: Container(
-        color: const Color(0xFF141821), // dark background like Lyft
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.surface,
+              colorScheme.primaryContainer.withValues(alpha: 0.35),
+              colorScheme.surface,
+            ],
+          ),
+        ),
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 🔹 Header – fetch profile then show avatar + name
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
                 child: FutureBuilder<SiteProfile?>(
                   future: repo.fetchProfile(),
                   builder: (context, snapshot) {
-                    // Loading → small spinner where header would be
                     if (snapshot.connectionState != ConnectionState.done) {
                       return const SizedBox(
-                        height: 72,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white70,
-                          ),
-                        ),
+                        height: 92,
+                        child: Center(child: CircularProgressIndicator()),
                       );
-                    }
-
-                    // Error → fallback "Guest" header
-                    if (snapshot.hasError) {
-                      debugPrint(
-                        '[HomeDrawer] ❌ fetchProfile error: ${snapshot.error}',
-                      );
-                      return _fallbackHeader(textTheme);
                     }
 
                     final profile = snapshot.data;
-
-                    if (profile == null) {
-                      debugPrint('[HomeDrawer] ⚠️ No profile row found.');
-                      return _fallbackHeader(textTheme);
+                    if (snapshot.hasError || profile == null) {
+                      return _fallbackHeader(textTheme, colorScheme);
                     }
 
-                    // Helper: trim or fallback
-                    String valueOr(String? raw, String fallback) {
-                      final v = raw?.trim();
-                      if (v == null || v.isEmpty) return fallback;
-                      return v;
-                    }
-
-                    final firstName = valueOr(profile.firstName, 'Razak');
-                    final lastName = valueOr(profile.lastName, 'Gafar');
-                    final fullName = '$firstName $lastName';
-                    final avatarUrl = profile.avatarUrl?.trim() ?? '';
-                    final profileFullName = profile.fullName.trim().isNotEmpty
+                    final firstName = _valueOr(profile.firstName, 'Razak');
+                    final lastName = _valueOr(profile.lastName, 'Gafar');
+                    final avatarUrl = profile.avatarUrl?.trim();
+                    final fullName = profile.fullName.trim().isNotEmpty
                         ? profile.fullName.trim()
-                        : fullName;
+                        : '$firstName $lastName';
 
-                    debugPrint('[HomeDrawer] name     : $fullName');
-                    debugPrint('[HomeDrawer] avatarUrl: $avatarUrl');
-
-                    return Row(
-                      children: [
-                        AppAvatar(
-                          avatarUrl: avatarUrl,
-                          fullName: profileFullName,
-                          email: profile.email,
-                          size: 56,
+                    return Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(26),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [colorScheme.primary, colorScheme.secondary],
                         ),
-
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                fullName,
-                                style: textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              TextButton(
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: const Size(0, 0),
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                onPressed: () {
-                                  debugPrint('[Drawer] View profile tapped');
-                                  Navigator.of(context).pop(); // close drawer
-                                  Navigator.of(context).pushNamed('/profile');
-                                },
-
-                                child: Text(
-                                  'View profile',
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.primary,
+                      ),
+                      child: Row(
+                        children: [
+                          AppAvatar(
+                            avatarUrl: avatarUrl,
+                            fullName: fullName,
+                            email: profile.email,
+                            size: 60,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  fullName,
+                                  style: textTheme.titleMedium?.copyWith(
+                                    color: colorScheme.onPrimary,
                                   ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Open for product-focused roles',
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onPrimary.withValues(
+                                      alpha: 0.82,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.of(context).pop();
+                                    Navigator.of(context).pushNamed('/profile');
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'View profile',
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: colorScheme.onPrimary,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                        Icons.north_east_rounded,
+                                        size: 16,
+                                        color: colorScheme.onPrimary,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     );
                   },
                 ),
               ),
-
-              const Divider(color: Colors.white10, height: 1),
-
-              // 🔹 Navigation items
-              _drawerItem(
-                context,
-                icon: Icons.dashboard_outlined,
-                label: 'Overview',
-                routeName: '/',
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Text(
+                  'Navigate',
+                  style: textTheme.labelLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ),
-              _drawerItem(
-                context,
-                icon: Icons.person,
-                label: 'Profile',
-                routeName: '/profile', // 👈 navigates to ProfilePage
-              ),
-              _drawerItem(
-                context,
-                icon: Icons.work_outline,
-                label: 'Projects',
-                routeName: '/projects',
-              ),
-              _drawerItem(
-                context,
-                icon: Icons.person_outline,
-                label: 'About me',
-                routeName: '/about',
-              ),
-              _drawerItem(
-                context,
-                icon: Icons.mail_outline,
-                label: 'Contact',
-                routeName: '/contact',
-              ),
-              _drawerItem(
-                context,
-                icon: Icons.article_outlined,
-                label: 'CV / Resume',
-                routeName: '/resume', // 👈 now navigates to ResumePage
-              ),
-
-              const Divider(color: Colors.white10, height: 24),
-              _drawerItem(
-                context,
-                icon: Icons.settings_outlined,
-                label: 'Settings',
-                routeName:
-                    '/admin', // 👈 Admin area (AuthGate → Login → SetupPage)
-              ),
-              _drawerItem(
-                context,
-                icon: Icons.help_outline,
-                label: 'Help',
-                routeName: '/help', // 👈 reuse Contact page UI for now
+              const SizedBox(height: 6),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  children: [
+                    _drawerItem(
+                      context,
+                      icon: Icons.space_dashboard_outlined,
+                      label: 'Overview',
+                      routeName: '/',
+                    ),
+                    _drawerItem(
+                      context,
+                      icon: Icons.person_outline,
+                      label: 'Profile',
+                      routeName: '/profile',
+                    ),
+                    _drawerItem(
+                      context,
+                      icon: Icons.work_outline,
+                      label: 'Projects',
+                      routeName: '/projects',
+                    ),
+                    _drawerItem(
+                      context,
+                      icon: Icons.psychology_alt_outlined,
+                      label: 'About me',
+                      routeName: '/about',
+                    ),
+                    _drawerItem(
+                      context,
+                      icon: Icons.mail_outline,
+                      label: 'Contact',
+                      routeName: '/contact',
+                    ),
+                    _drawerItem(
+                      context,
+                      icon: Icons.article_outlined,
+                      label: 'CV / Resume',
+                      routeName: '/resume',
+                    ),
+                    const SizedBox(height: 14),
+                    Divider(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+                    ),
+                    _drawerItem(
+                      context,
+                      icon: Icons.settings_outlined,
+                      label: 'Admin',
+                      routeName: '/admin',
+                    ),
+                    _drawerItem(
+                      context,
+                      icon: Icons.help_outline,
+                      label: 'Help',
+                      routeName: '/help',
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -191,46 +206,56 @@ class HomeDrawer extends StatelessWidget {
     );
   }
 
-  // Fallback header when profile fails to load
-  Widget _fallbackHeader(TextTheme textTheme) {
-    return Row(
-      children: [
-        const CircleAvatar(
-          radius: 28,
-          backgroundColor: Colors.white10,
-          child: Icon(Icons.person, color: Colors.white70),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          'Guest',
-          style: textTheme.titleMedium?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+  String _valueOr(String? raw, String fallback) {
+    final value = raw?.trim();
+    if (value == null || value.isEmpty) {
+      return fallback;
+    }
+    return value;
+  }
+
+  Widget _fallbackHeader(TextTheme textTheme, ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer.withValues(alpha: 0.52),
+        borderRadius: BorderRadius.circular(26),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: colorScheme.primary,
+            child: Icon(Icons.person, color: colorScheme.onPrimary),
           ),
-        ),
-      ],
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text('Portfolio navigation', style: textTheme.titleMedium),
+          ),
+        ],
+      ),
     );
   }
 
-  // ✅ Single merged version: supports navigation via routeName
   Widget _drawerItem(
     BuildContext context, {
     required IconData icon,
     required String label,
     String? routeName,
   }) {
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return ListTile(
-      leading: Icon(icon, color: Colors.white70, size: 22),
-      title: Text(
-        label,
-        style: textTheme.bodyMedium?.copyWith(color: Colors.white),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      leading: Icon(icon, color: colorScheme.onSurface),
+      title: Text(label, style: theme.textTheme.bodyMedium),
+      trailing: Icon(
+        Icons.chevron_right_rounded,
+        color: colorScheme.onSurfaceVariant,
       ),
       onTap: () {
-        debugPrint('[Drawer] $label tapped');
-        Navigator.of(context).pop(); // close drawer first
-
+        Navigator.of(context).pop();
         if (routeName != null) {
           Navigator.of(context).pushNamed(routeName);
         }
