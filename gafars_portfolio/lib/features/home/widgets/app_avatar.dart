@@ -1,6 +1,6 @@
 // Reusable avatar widget used across the app.
 // - Uses the uploaded profile image when present.
-// - Falls back to DiceBear's adventurer avatar when no profile image exists.
+// - Falls back to a curated DiceBear avatar when no profile image exists.
 // - Falls back to a generic person icon only if both network paths fail.
 
 import 'package:flutter/material.dart';

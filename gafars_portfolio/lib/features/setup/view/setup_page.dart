@@ -213,7 +213,7 @@ class _SetupPageState extends State<SetupPage> {
   }
 
   List<AvatarPresetOption> get _diceBearOptions =>
-      AvatarPresets.buildDiceBearOptions(
+      AvatarPresets.buildProfileFitOptions(
         fullName: _avatarPreviewName,
         email: _emptyToNull(_email.text),
       );
@@ -225,11 +225,11 @@ class _SetupPageState extends State<SetupPage> {
 
   String get _avatarStatusText {
     if (!_hasAvatarSelection) {
-      return 'No uploaded profile image yet. The default DiceBear adventurer fallback is active.';
+      return 'No uploaded profile image yet. A profile-fit DiceBear fallback is active.';
     }
 
     if (_hasDiceBearSelection) {
-      return 'A DiceBear adventurer avatar is selected. Uploading a profile image will override it.';
+      return 'A curated DiceBear avatar is selected. Uploading a profile image will override it.';
     }
 
     return 'Uploaded profile image is active. Removing it will switch back to DiceBear.';
@@ -770,14 +770,14 @@ class _SetupPageState extends State<SetupPage> {
                               const SizedBox(height: 12),
 
                               Text(
-                                'Pick a DiceBear avatar',
+                                'Pick a profile-fit DiceBear avatar',
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'These avatars come from the DiceBear adventurer API. Select one below, or leave the field empty to use the automatic fallback.',
+                                'These presets use the DiceBear API with dreads, darker skin tones, glasses, and clothing choices that fit your profile more closely. Select one below, or leave the field empty to use the automatic fallback.',
                                 style: theme.textTheme.bodySmall,
                               ),
                               const SizedBox(height: 12),

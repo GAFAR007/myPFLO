@@ -6,7 +6,7 @@ import 'package:gafars_portfolio/features/home/widgets/avatar_presets.dart';
 
 void main() {
   test(
-    'DiceBear adventurer URL uses api.dicebear.com and the adventurer style',
+    'DiceBear fallback URL uses api.dicebear.com and the avataaars style',
     () {
       final url = AvatarPresets.buildDiceBearUrl(
         fullName: 'Razak Gafar',
@@ -14,20 +14,24 @@ void main() {
       );
 
       expect(url, contains('https://api.dicebear.com'));
-      expect(url, contains('/adventurer/png'));
-      expect(url, contains('Razak%20Gafar'));
+      expect(url, contains('/avataaars/png'));
+      expect(url, contains('seed=Razak+Gafar'));
+      expect(url, contains('top=dreads02'));
     },
   );
 
-  test('DiceBear avatar options generate multiple adventurer choices', () {
-    final options = AvatarPresets.buildDiceBearOptions(
+  test('DiceBear avatar options generate curated profile-fit choices', () {
+    final options = AvatarPresets.buildProfileFitOptions(
       fullName: 'Razak Gafar',
       email: 'razak@example.com',
     );
 
     expect(options, hasLength(6));
-    expect(options.first.url, contains('/adventurer/png'));
-    expect(options.map((option) => option.seed).toSet(), hasLength(6));
+    expect(options.first.url, contains('/avataaars/png'));
+    expect(
+      options.map((option) => option.label),
+      containsAll(['Dreads + Glasses', 'Tech Lead', 'Focused Dev']),
+    );
   });
 
   testWidgets('Login page renders admin sign-in form', (
