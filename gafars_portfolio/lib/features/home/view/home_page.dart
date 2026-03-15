@@ -41,7 +41,7 @@ class HomePage extends StatelessWidget {
           );
           final tagline = _valueOr(
             profile.tagline,
-            'I build practical products with Flutter, Node.js, JavaScript, APIs, and carefully used AI so the final result feels useful, safe, and production-ready.',
+            'I build practical products with Flutter, Node.js, JavaScript, APIs, and AI integrations that improve efficiency while still prioritising safety, validation, and real product usefulness.',
           );
           final location = _valueOr(
             profile.location,
@@ -150,7 +150,7 @@ class HomePage extends StatelessWidget {
                                 _ProofCard(
                                   label: 'AI workflow',
                                   value:
-                                      'I use AI for drafting, research, and implementation support, then tighten the logic, UX, and product decisions myself.',
+                                      'I integrate AI APIs into apps to improve drafting, support, and workflow efficiency, then I tighten the product logic, UX, and safeguards myself.',
                                 ),
                                 _ProofCard(
                                   label: 'Backend and APIs',
@@ -295,7 +295,7 @@ class _HeroCopy extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         Text(
-          'I build digital products with Flutter, APIs, and AI-assisted workflows that still feel deliberate.',
+          'I build Flutter products that use APIs and AI to improve efficiency without lowering the safety bar.',
           style: compact
               ? theme.textTheme.displaySmall
               : theme.textTheme.displayLarge,
@@ -434,15 +434,15 @@ class _ProfileSpotlight extends StatelessWidget {
           ),
           const SizedBox(height: 22),
           const _CapabilityLine(
-            title: 'AI in development',
+            title: 'AI API integration',
             value:
-                'I use AI to draft, unblock, and explore faster, not to replace architecture, review, or product judgment.',
+                'I integrate AI APIs where they improve drafting, assistance, or operational speed, then shape the user flow and production logic around them.',
           ),
           const SizedBox(height: 12),
           const _CapabilityLine(
             title: 'Safe integration',
             value:
-                'I keep sensitive logic behind APIs, validate outputs, and avoid letting AI drive unchecked production behaviour.',
+                'I keep sensitive logic behind backend APIs, validate outputs, control access, and avoid letting AI drive unchecked production behaviour.',
           ),
           const SizedBox(height: 12),
           const _CapabilityLine(
@@ -574,7 +574,7 @@ class _HiringAngleSection extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(
-          'I use AI as a development tool, not as a shortcut for judgment. It helps me draft faster, reason through edge cases, and move quicker on implementation, but I still own the product thinking, safety boundaries, and code quality.',
+          'I use AI to improve product efficiency, but not by handing over control. My approach is to integrate AI APIs where they genuinely help users or teams move faster, while still keeping validation, access control, and safety boundaries in place.',
           style: theme.textTheme.bodyLarge,
         ),
         const SizedBox(height: 22),
@@ -585,18 +585,18 @@ class _HiringAngleSection extends StatelessWidget {
             Expanded(
               child: _AngleCard(
                 number: '01',
-                title: 'AI for drafting',
+                title: 'AI to improve efficiency',
                 description:
-                    'I use AI to draft flows, refine copy, explore implementation options, and speed up repetitive work without handing over the final decisions.',
+                    'I use AI for drafting, assistance, and workflow support so users and teams can do more in less time without making the product feel careless.',
               ),
             ),
             SizedBox(width: 18, height: 18),
             Expanded(
               child: _AngleCard(
                 number: '02',
-                title: 'Safe integration',
+                title: 'Safety first',
                 description:
-                    'When AI is part of a product, I prefer controlled API layers, validation, clear boundaries, and human review instead of exposing raw model behaviour directly.',
+                    'When AI is part of the product, I put it behind controlled API layers, validate outputs, keep permissions clear, and avoid exposing raw model behaviour directly.',
               ),
             ),
             SizedBox(width: 18, height: 18),
