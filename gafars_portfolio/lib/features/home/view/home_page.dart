@@ -41,7 +41,7 @@ class HomePage extends StatelessWidget {
           );
           final tagline = _valueOr(
             profile.tagline,
-            'I combine product thinking, clean implementation, and business context so the end result feels credible the moment someone lands on it.',
+            'I build practical products with Flutter, Node.js, JavaScript, APIs, and carefully used AI so the final result feels useful, safe, and production-ready.',
           );
           final location = _valueOr(
             profile.location,
@@ -148,19 +148,19 @@ class HomePage extends StatelessWidget {
                               runSpacing: 18,
                               children: const [
                                 _ProofCard(
-                                  label: 'Best fit',
+                                  label: 'AI workflow',
                                   value:
-                                      'Teams that need polished Flutter delivery with product judgment.',
+                                      'I use AI for drafting, research, and implementation support, then tighten the logic, UX, and product decisions myself.',
                                 ),
                                 _ProofCard(
-                                  label: 'Working style',
+                                  label: 'Backend and APIs',
                                   value:
-                                      'Fast iteration, clean execution, and clear communication.',
+                                      'I build Flutter frontends with Node.js backends, MongoDB, and external API integrations that support real product flows.',
                                 ),
                                 _ProofCard(
-                                  label: 'Stack',
+                                  label: 'Built products',
                                   value:
-                                      'Flutter, Node.js, MongoDB, product UX, and frontend detail.',
+                                      'Portfolio platform, Farm Research Platform, and Focus Mission all reflect how I ship usable systems end to end.',
                                 ),
                               ],
                             ),
@@ -295,7 +295,7 @@ class _HeroCopy extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         Text(
-          'I build software that feels polished enough to trust at first glance.',
+          'I build digital products with Flutter, APIs, and AI-assisted workflows that still feel deliberate.',
           style: compact
               ? theme.textTheme.displaySmall
               : theme.textTheme.displayLarge,
@@ -312,7 +312,7 @@ class _HeroCopy extends StatelessWidget {
               ),
               TextSpan(
                 text:
-                    'is a $title who treats the portfolio itself like a product. $tagline',
+                    'is a $title who builds across frontend, backend, and product detail. $tagline',
               ),
             ],
           ),
@@ -434,18 +434,21 @@ class _ProfileSpotlight extends StatelessWidget {
           ),
           const SizedBox(height: 22),
           const _CapabilityLine(
-            title: 'What you get',
-            value: 'A frontend that looks intentional, not assembled.',
+            title: 'AI in development',
+            value:
+                'I use AI to draft, unblock, and explore faster, not to replace architecture, review, or product judgment.',
           ),
           const SizedBox(height: 12),
           const _CapabilityLine(
-            title: 'What I optimise for',
-            value: 'Trust, clarity, and product feel.',
+            title: 'Safe integration',
+            value:
+                'I keep sensitive logic behind APIs, validate outputs, and avoid letting AI drive unchecked production behaviour.',
           ),
           const SizedBox(height: 12),
           const _CapabilityLine(
-            title: 'Where I add value',
-            value: 'Shipping quickly without making the UI feel cheap.',
+            title: 'Core stack',
+            value:
+                'Flutter, Node.js, JavaScript, MongoDB, third-party APIs, and product-focused frontend delivery.',
           ),
           const SizedBox(height: 22),
           Wrap(
@@ -453,10 +456,11 @@ class _ProfileSpotlight extends StatelessWidget {
             runSpacing: 10,
             children: const [
               Chip(label: Text('Flutter')),
+              Chip(label: Text('JavaScript')),
               Chip(label: Text('MongoDB')),
               Chip(label: Text('Node.js')),
-              Chip(label: Text('UX detail')),
-              Chip(label: Text('Product thinking')),
+              Chip(label: Text('APIs')),
+              Chip(label: Text('AI workflows')),
             ],
           ),
         ],
@@ -564,10 +568,13 @@ class _HiringAngleSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Why this feels stronger', style: theme.textTheme.headlineMedium),
+        Text(
+          'How I use AI and APIs in real products',
+          style: theme.textTheme.headlineMedium,
+        ),
         const SizedBox(height: 10),
         Text(
-          'Hiring managers should immediately see more than technical ability. The UI should signal judgment, product taste, and credibility before they read the second paragraph.',
+          'I use AI as a development tool, not as a shortcut for judgment. It helps me draft faster, reason through edge cases, and move quicker on implementation, but I still own the product thinking, safety boundaries, and code quality.',
           style: theme.textTheme.bodyLarge,
         ),
         const SizedBox(height: 22),
@@ -578,27 +585,27 @@ class _HiringAngleSection extends StatelessWidget {
             Expanded(
               child: _AngleCard(
                 number: '01',
-                title: 'Clear first impression',
+                title: 'AI for drafting',
                 description:
-                    'The hero now leads with competence, not generic portfolio language.',
+                    'I use AI to draft flows, refine copy, explore implementation options, and speed up repetitive work without handing over the final decisions.',
               ),
             ),
             SizedBox(width: 18, height: 18),
             Expanded(
               child: _AngleCard(
                 number: '02',
-                title: 'Sharper hiring narrative',
+                title: 'Safe integration',
                 description:
-                    'The copy frames you as someone who ships polished software, not just screens.',
+                    'When AI is part of a product, I prefer controlled API layers, validation, clear boundaries, and human review instead of exposing raw model behaviour directly.',
               ),
             ),
             SizedBox(width: 18, height: 18),
             Expanded(
               child: _AngleCard(
                 number: '03',
-                title: 'More visual confidence',
+                title: 'Built with my stack',
                 description:
-                    'Typography, palette, and section structure now look chosen on purpose.',
+                    'My work spans Flutter interfaces, Node.js services, JavaScript integrations, MongoDB-backed systems, and API-driven products like this portfolio, Farm Research Platform, and Focus Mission.',
               ),
             ),
           ],
