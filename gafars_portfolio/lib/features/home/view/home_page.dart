@@ -153,9 +153,9 @@ class HomePage extends StatelessWidget {
                                       'I integrate AI APIs into apps to improve drafting, support, and workflow efficiency, then I tighten the product logic, UX, and safeguards myself.',
                                 ),
                                 _ProofCard(
-                                  label: 'Backend and APIs',
+                                  label: 'Deployment and APIs',
                                   value:
-                                      'I build Flutter frontends with Node.js backends, MongoDB, and external API integrations that support real product flows.',
+                                      'I build Flutter frontends with Node.js backends, MongoDB, and external API integrations, then deploy backend services with Render or Supabase-style setups and ship the frontend on Netlify.',
                                 ),
                                 _ProofCard(
                                   label: 'Built products',
@@ -450,6 +450,12 @@ class _ProfileSpotlight extends StatelessWidget {
             value:
                 'Flutter, Node.js, JavaScript, MongoDB, third-party APIs, and product-focused frontend delivery.',
           ),
+          const SizedBox(height: 12),
+          const _CapabilityLine(
+            title: 'Deployment',
+            value:
+                'Strong with Render for backend deployment, experienced with Supabase-based backend setups, familiar with other deployment paths, and comfortable shipping Flutter web on Netlify.',
+          ),
           const SizedBox(height: 22),
           Wrap(
             spacing: 10,
@@ -460,6 +466,8 @@ class _ProfileSpotlight extends StatelessWidget {
               Chip(label: Text('MongoDB')),
               Chip(label: Text('Node.js')),
               Chip(label: Text('APIs')),
+              Chip(label: Text('Render')),
+              Chip(label: Text('Netlify')),
               Chip(label: Text('AI workflows')),
             ],
           ),
@@ -603,9 +611,9 @@ class _HiringAngleSection extends StatelessWidget {
             Expanded(
               child: _AngleCard(
                 number: '03',
-                title: 'Built with my stack',
+                title: 'Built and deployed',
                 description:
-                    'My work spans Flutter interfaces, Node.js services, JavaScript integrations, MongoDB-backed systems, and API-driven products like this portfolio, Farm Research Platform, and Focus Mission.',
+                    'My work spans Flutter interfaces, Node.js services, JavaScript integrations, MongoDB-backed systems, and deployed products like this portfolio, Farm Research Platform, and Focus Mission using tools such as Render and Netlify.',
               ),
             ),
           ],
